@@ -2355,112 +2355,272 @@
     }
 
     // Cheat-Sheet Tab Content
-        function renderCheatSheet() {
+            function renderCheatSheet() {
       const root = document.getElementById('cheatsheet-root');
       root.innerHTML = `
-        <div class="cheat-card">
+        <!-- SECCIÓN 1: COMPARATIVA PRESCRIPTIVO VS ÁGIL -->
+        <div class="cheat-card" style="margin-bottom:20px;">
           <h3>⚡ 1. Prescriptivo (Cascada) vs. Ágil (Scrum)</h3>
           <div class="cheat-table-wrap"><table class="cheat-table">
             <tr><th>Dimensión</th><th>Prescriptivo (Cascada)</th><th>Ágil (Scrum)</th></tr>
-            <tr><td><strong>Alcance</strong></td><td><strong>FIJO</strong> (Contrato cerrado inicial)</td><td><strong>VARIABLE</strong> (Priorizado en Product Backlog)</td></tr>
+            <tr><td><strong>Alcance</strong></td><td><strong>FIJO</strong> (Contrato cerrado y congelado al inicio)</td><td><strong>VARIABLE</strong> (Priorizado continuamente en Product Backlog)</td></tr>
             <tr><td><strong>Tiempo y Costo</strong></td><td>Estimados / Variables</td><td><strong>FIJOS</strong> (Timeboxes de 2-4 semanas / Equipo estable)</td></tr>
             <tr><td><strong>Métrica de Tamaño</strong></td><td><strong>Puntos de Función</strong> (Tamaño funcional absoluto, independiente del equipo)</td><td><strong>Puntos de Historia</strong> (Esfuerzo relativo + Complejidad + Incertidumbre; propio de cada equipo)</td></tr>
             <tr><td><strong>Pruebas</strong></td><td>Concentradas masivamente hacia el final del ciclo</td><td>Validación continua e integrada por Sprint (Humo / Regresión / CI)</td></tr>
             <tr><td><strong>Requerimientos</strong></td><td>Documento formal SRS (IEEE 830) exhaustivo</td><td>Historias de Usuario (Rol + Quiero + Para) con Criterios de Aceptación</td></tr>
           </table></div>
-          <p style="font-size:0.8rem;color:#fde047;margin:10px 0 0;">⚠️ <strong>Regla del Trinomio de Hierro:</strong> Si se fuerzan Alcance + Tiempo + Costo fijos al mismo tiempo, colapsa la variable oculta central: <strong>LA CALIDAD</strong> (deuda técnica y fallos en producción).</p>
-        </div>
-
-        <div class="cheat-card">
-          <h3>🏠 2. Modelo 4+1 Vistas de Kruchten (IEEE 1471 / ISO 42010)</h3>
-          <div class="cheat-table-wrap"><table class="cheat-table">
-            <tr><th>Vista</th><th>Analogía Plano de la Casa</th><th>Interesado (Stakeholder)</th><th>Diagramas UML Típicos</th></tr>
-            <tr><td><strong>Lógica</strong></td><td>Plano de Planta / Distribución funcional</td><td>Cliente / Usuario final</td><td>Clases, Paquetes, Casos de Uso</td></tr>
-            <tr><td><strong>Proceso</strong></td><td>Plano Eléctrico (flujos, corrientes, cargas)</td><td>Integradores / Rendimiento</td><td>Actividad, Secuencia, Estados (Hilos/Concurrencia)</td></tr>
-            <tr><td><strong>Física</strong></td><td>Tuberías de fontanería, gas y caldera</td><td>DevOps / SysAdmin</td><td>Despliegue (Nodos, Servidores, Redes)</td></tr>
-            <tr><td><strong>Desarrollo</strong></td><td>Estructura, Vigas, Cimientos y Materiales</td><td>Programadores</td><td>Componentes, Módulos, Código, Dependencias</td></tr>
-            <tr><td><strong>+1 Escenarios</strong></td><td>Recorrido del habitante viviendo en la casa</td><td>Todos los stakeholders</td><td><strong>Une y valida</strong> las 4 vistas entre sí en el centro</td></tr>
-          </table></div>
-        </div>
-
-        <div class="cheat-card">
-          <h3>🧠 3. Arsenal de Reglas Mnemotécnicas Inolvidables</h3>
-          <div class="mnemonic-grid">
-            <div class="mnemonic-box">
-              <span class="mnemonic-badge">Regla de Oro Modular</span>
-              <div class="mnemonic-title">✨ DA-FUN ("Da Diversión y Cero Dolor")</div>
-              <p style="margin:0;">Buscamos siempre Acoplamiento a <strong>DA-tos</strong> (el más bajo y desacoplado) y Cohesión <strong>FUN-cional</strong> (la más alta y especializada). <em>¡Diseño modular = DA-FUN!</em></p>
-            </div>
-
-            <div class="mnemonic-box">
-              <span class="mnemonic-badge">Cohesión (Peor a Mejor)</span>
-              <div class="mnemonic-title">🪜 CO-LO-TE ... PRO-CO-SE ... FU</div>
-              <p style="margin:0;"><strong>1. CO</strong>incidente (el peor, azar) → <strong>2. LÓ</strong>gica → <strong>3. TE</strong>mporal (en init) → <strong>4. PRO</strong>cedimental → <strong>5. CO</strong>municación (mismos datos) → <strong>6. SE</strong>cuencial (tubería) → <strong>7. FU</strong>ncional (la cumbre perfecta).</p>
-            </div>
-
-            <div class="mnemonic-box">
-              <span class="mnemonic-badge">Acoplamiento (Peor a Mejor)</span>
-              <div class="mnemonic-title">🛑 CON-CO-CON-ES-DA</div>
-              <p style="margin:0;"><strong>1. CON</strong>tenido (veneno mortal, meterse en las entrañas de otro) → <strong>2. COM</strong>ún (variables globales) → <strong>3. CON</strong>trol (flags booleanas) → <strong>4. ES</strong>tampado (structs enteros) → <strong>5. DA</strong>tos (parámetros escalares mínimos limpios).</p>
-            </div>
-
-            <div class="mnemonic-box">
-              <span class="mnemonic-badge">Calidad de Software</span>
-              <div class="mnemonic-title">🎯 Veri-CÓMO vs. Vali-QUÉ</div>
-              <p style="margin:0;">• <strong>Verificación:</strong> ¿<em>CÓMO</em> lo construimos? (¿Correctamente según la especificación técnica?).<br>• <strong>Validación:</strong> ¿<em>QUÉ</em> construimos? (¿Es el producto correcto que el cliente necesita?).</p>
-            </div>
-
-            <div class="mnemonic-box">
-              <span class="mnemonic-badge">Formatos de Entrevista</span>
-              <div class="mnemonic-title">📐 Pirámide vs Embudo vs Rombo</div>
-              <p style="margin:0;">• <strong>Piramidal:</strong> Punta fina a base ancha (preguntas <em>específicas</em> → <em>generales</em>).<br>• <strong>Embudo:</strong> Boca ancha a tubo fino (preguntas <em>generales</em> → <em>específicas</em>).<br>• <strong>Rombo:</strong> Abre y cierra (<em>específico</em> → <em>general</em> → <em>específico</em>).</p>
-            </div>
-
-            <div class="mnemonic-box">
-              <span class="mnemonic-badge">Fórmula PERT</span>
-              <div class="mnemonic-title">⚖️ "El 4 en el Medio"</div>
-              <p style="margin:0;"><code>te = (to + 4·tm + tp) / 6</code><br>El 4 multiplica siempre al Más Probable (<em>tm</em>), y se divide por 6 porque son 6 pesos totales (1 optimista + 4 más probables + 1 pesimista).</p>
-            </div>
-
-            <div class="mnemonic-box">
-              <span class="mnemonic-badge">Ley de Fred Brooks</span>
-              <div class="mnemonic-title">👶 9 Mujeres no hacen un Bebé en 1 Mes</div>
-              <p style="margin:0;">Sumar gente a un proyecto retrasado lo retrasa más por los canales de comunicación <code>C = n(n-1)/2</code> y el tiempo que insume capacitar e inducir a los nuevos.</p>
-            </div>
-
-            <div class="mnemonic-box">
-              <span class="mnemonic-badge">Regla de Esfuerzo 40-20-40</span>
-              <div class="mnemonic-title">⏱️ 40 Pensás, 20 Picás, 40 Probás</div>
-              <p style="margin:0;">40% Análisis/Diseño, 20% Codificación, 40% Pruebas. (Planificación inicial &lt; 3%).<br><em>¡Ojo! En toda la vida histórica del software, el <strong>Mantenimiento</strong> insume el 60-80% del dinero total.</em></p>
-            </div>
-
-            <div class="mnemonic-box">
-              <span class="mnemonic-badge">Jerarquía Modular</span>
-              <div class="mnemonic-title">📥 Fan-IN vs. Fan-OUT</div>
-              <p style="margin:0;">• <strong>Fan-IN (Entrada):</strong> ¿Quién entra a mí? (cuántos me llaman). ¡Alto Fan-In es deseable, indica alta reutilización!<br>• <strong>Fan-OUT (Salida):</strong> ¿A cuántos llamo yo? (moderado 3-7 es sano; 30 es un módulo pulpo que hace de todo).</p>
-            </div>
-
-            <div class="mnemonic-box">
-              <span class="mnemonic-badge">Ambientes Segregados</span>
-              <div class="mnemonic-title">🏢 Taller, Pista de Choque y Autopista</div>
-              <p style="margin:0;">• <strong>DEV:</strong> El taller (laboratorio del programador, datos sintéticos).<br>• <strong>QA / STAGING:</strong> La pista de choque (réplica fiel sin pasajeros).<br>• <strong>PROD:</strong> La autopista con pasajeros reales (acceso restringido, cero debuggeo en vivo).</p>
-            </div>
-
-            <div class="mnemonic-box">
-              <span class="mnemonic-badge">Principios de Myers</span>
-              <div class="mnemonic-title">🕵️ La Prueba Caza al Culpable</div>
-              <p style="margin:0;">Una prueba exitosa es la que <strong>DESCUBRE un error no detectado</strong>. Si pasa sin encontrar nada, no festejas: la prueba falló en atrapar al culpable.</p>
-            </div>
-
-            <div class="mnemonic-box">
-              <span class="mnemonic-badge">Caja Negra vs Blanca</span>
-              <div class="mnemonic-title">🔍 Gran Escala vs Pequeña Escala</div>
-              <p style="margin:0;">• <strong>Caja Negra (Gran Escala):</strong> Interfaz y requisitos funcionales por fuera (sin mirar el código).<br>• <strong>Caja Blanca (Pequeña Escala):</strong> Caminos lógicos internos, condiciones y bucles con lupa.</p>
-            </div>
+          <div class="takeaway-box">
+            ⚠️ <strong>Regla de Oro del Trinomio de Hierro:</strong> Si se intentan forzar <strong>Alcance + Tiempo + Costo fijos al mismo tiempo</strong>, la variable oculta que colapsa catastróficamente es <strong>LA CALIDAD</strong> (deuda técnica inmanejable y bugs en producción).
           </div>
         </div>
 
-        <div class="cheat-card">
+        <!-- SECCIÓN 2: KRUCHTEN 4+1 VISTAS (LA CASA) -->
+        <div class="cheat-card" style="margin-bottom:20px;">
+          <h3>🏠 2. Modelo 4+1 Vistas de Kruchten (IEEE 1471 / ISO 42010)</h3>
+          <div class="acronym-pill-box">
+            <span class="acronym-highlight">"Los Pibes Festejan Duro con Escenario" (L - P - F - D + E)</span>
+            <span class="acronym-phrase">Mnemotecnia oficial de las 4+1 Vistas</span>
+          </div>
+          <div class="cheat-table-wrap"><table class="cheat-table">
+            <tr><th>Vista</th><th>Analogía Plano de la Casa</th><th>Interesado (Stakeholder)</th><th>Diagramas UML Típicos</th></tr>
+            <tr><td><strong>Lógica (L)</strong></td><td>Plano de Planta / Distribución de habitaciones</td><td>Cliente / Usuario final</td><td>Clases, Paquetes, Casos de Uso</td></tr>
+            <tr><td><strong>Proceso (P)</strong></td><td>Plano Eléctrico (flujos, corrientes y cargas)</td><td>Integradores / Rendimiento</td><td>Actividad, Secuencia, Estados (Hilos y Concurrencia)</td></tr>
+            <tr><td><strong>Física (F)</strong></td><td>Tuberías de fontanería, gas y caldera</td><td>DevOps / Administrador de Red</td><td>Despliegue (Nodos, Servidores, Topología)</td></tr>
+            <tr><td><strong>Desarrollo (D)</strong></td><td>Estructura, Vigas, Cimientos y Materiales</td><td>Programadores / Desarrolladores</td><td>Componentes, Módulos, Código, Dependencias</td></tr>
+            <tr><td><strong>+1 Escenarios (E)</strong></td><td>Recorrido del habitante viviendo en la casa</td><td>Todos los interesados</td><td><strong>Une, conecta y valida</strong> a las 4 vistas entre sí en el centro</td></tr>
+          </table></div>
+        </div>
+
+        <!-- SECCIÓN 3: ARSENAL DE REGLAS MNEMOTÉCNICAS (ORGANIZADO Y ESPACIOSO) -->
+        <div class="cheat-card" style="margin-bottom:20px;">
+          <h3 style="font-size:1.15rem; margin-bottom:16px;">🧠 3. Arsenal de Reglas Mnemotécnicas (Paso a Paso y Sin Comprimir)</h3>
+          
+          <div class="mnemonic-section-wrap">
+            
+            <!-- BLOQUE A: DISEÑO MODULAR -->
+            <div class="mnemonic-block">
+              <div class="mnemonic-block-header">
+                <span class="mnemonic-block-icon">✨</span>
+                <div>
+                  <h4 class="mnemonic-block-title">Regla de Oro del Diseño Modular: "DA-FUN"</h4>
+                  <div class="mnemonic-block-subtitle">Cómo recordar siempre la meta de diseño de software</div>
+                </div>
+              </div>
+              <div class="acronym-pill-box">
+                <span class="acronym-highlight">DA - FUN</span>
+                <span class="acronym-phrase">"Da Diversión y Cero Dolor de Cabeza"</span>
+              </div>
+              <p class="mnemonic-desc">
+                Buscamos siempre el acoplamiento más bajo y la cohesión más alta:<br>
+                • <strong>DA</strong> $\rightarrow$ Acoplamiento a <strong>DA-tos</strong> (el más bajo, limpio e independiente).<br>
+                • <strong>FUN</strong> $\rightarrow$ Cohesión <strong>FUN-cional</strong> (la más alta, especializada y perfecta).
+              </p>
+              <div class="takeaway-box">
+                💡 <em>En el examen:</em> Marca siempre <strong>Bajo Acoplamiento (Datos)</strong> y <strong>Alta Cohesión (Funcional)</strong>.
+              </div>
+            </div>
+
+            <!-- BLOQUE B: ESCALA DE COHESIÓN -->
+            <div class="mnemonic-block">
+              <div class="mnemonic-block-header">
+                <span class="mnemonic-block-icon">🪜</span>
+                <div>
+                  <h4 class="mnemonic-block-title">Los 7 Niveles de Cohesión (De Peor a Mejor)</h4>
+                  <div class="mnemonic-block-subtitle">Mnemotecnia secuencial: "CO - LO - TE ... PRO - CO - SE ... FU"</div>
+                </div>
+              </div>
+              
+              <div class="ladder-list">
+                <div class="ladder-step">
+                  <span class="ladder-badge worst">1. El Peor</span>
+                  <span class="ladder-name">CO-incidente</span>
+                  <span class="ladder-detail">Funciones agrupadas al azar sin ninguna relación real (ej: archivo "utils.js" cajón de sastre).</span>
+                </div>
+                <div class="ladder-step">
+                  <span class="ladder-badge bad">2. Bajo</span>
+                  <span class="ladder-name">LÓ-gica</span>
+                  <span class="ladder-detail">Hacen tareas vagamente parecidas (ej: un módulo que procesa todas las entradas del sistema).</span>
+                </div>
+                <div class="ladder-step">
+                  <span class="ladder-badge bad">3. Bajo</span>
+                  <span class="ladder-name">TE-mporal</span>
+                  <span class="ladder-detail">Instrucciones que solo se juntan porque ocurren al mismo tiempo (ej: la rutina <code>init()</code> de arranque).</span>
+                </div>
+                <div class="ladder-step">
+                  <span class="ladder-badge mid">4. Medio</span>
+                  <span class="ladder-name">PRO-cedimental</span>
+                  <span class="ladder-detail">Siguen un orden de pasos procedimentales (paso 1, paso 2) pero sin compartir datos.</span>
+                </div>
+                <div class="ladder-step">
+                  <span class="ladder-badge mid">5. Medio-Alto</span>
+                  <span class="ladder-name">CO-municación</span>
+                  <span class="ladder-detail">Todas las funciones operan sobre el mismo conjunto o registro de datos de entrada/salida.</span>
+                </div>
+                <div class="ladder-step">
+                  <span class="ladder-badge good">6. Alto</span>
+                  <span class="ladder-name">SE-cuencial</span>
+                  <span class="ladder-detail">La salida de una instrucción es la entrada directa de la siguiente en cadena (tubería/pipeline).</span>
+                </div>
+                <div class="ladder-step">
+                  <span class="ladder-badge best">7. La Cumbre</span>
+                  <span class="ladder-name">🌟 FU-ncional</span>
+                  <span class="ladder-detail">El módulo realiza <strong>UNA sola tarea concreta</strong> y la hace completa y perfectamente.</span>
+                </div>
+              </div>
+              <div class="takeaway-box">
+                🎯 <em>Mnemotecnia para recordar el orden:</em> <strong>"CO-LO-TE"</strong> son los peores $\rightarrow$ <strong>"PRO-CO-SE"</strong> los del medio $\rightarrow$ <strong>"FU"</strong> es la gloria máxima.
+              </div>
+            </div>
+
+            <!-- BLOQUE C: ESCALA DE ACOPLAMIENTO -->
+            <div class="mnemonic-block">
+              <div class="mnemonic-block-header">
+                <span class="mnemonic-block-icon">🛑</span>
+                <div>
+                  <h4 class="mnemonic-block-title">Los 5 Niveles de Acoplamiento (De Peor a Mejor)</h4>
+                  <div class="mnemonic-block-subtitle">Mnemotecnia secuencial: "CON - COM - CON - ES - DA"</div>
+                </div>
+              </div>
+
+              <div class="ladder-list">
+                <div class="ladder-step">
+                  <span class="ladder-badge worst">1. Veneno Total</span>
+                  <span class="ladder-name">CON-tenido</span>
+                  <span class="ladder-detail">Un módulo se mete a modificar variables internas o salta directamente al código privado de otro.</span>
+                </div>
+                <div class="ladder-step">
+                  <span class="ladder-badge bad">2. Muy Alto</span>
+                  <span class="ladder-name">COM-ún</span>
+                  <span class="ladder-detail">Múltiples módulos comparten y modifican variables globales sin control en memoria.</span>
+                </div>
+                <div class="ladder-step">
+                  <span class="ladder-badge mid">3. Alto</span>
+                  <span class="ladder-name">CON-trol</span>
+                  <span class="ladder-detail">Un módulo le pasa banderas booleanas (flags) a otro para decirle qué rama o camino ejecutar.</span>
+                </div>
+                <div class="ladder-step">
+                  <span class="ladder-badge good">4. Moderado</span>
+                  <span class="ladder-name">ES-tampado (Stamp)</span>
+                  <span class="ladder-detail">Se pasa una estructura u objeto entero cuando el módulo solo necesitaba leer 1 campo.</span>
+                </div>
+                <div class="ladder-step">
+                  <span class="ladder-badge best">5. El Ideal</span>
+                  <span class="ladder-name">🌟 DA-tos</span>
+                  <span class="ladder-detail">Los módulos se comunican pasando únicamente argumentos de datos elementales mínimos indispensables.</span>
+                </div>
+              </div>
+              <div class="takeaway-box">
+                🎯 <em>Regla de examen:</em> <strong>De Contenido</strong> es el peor acoplamiento posible. <strong>De Datos</strong> es el mejor y más independiente.
+              </div>
+            </div>
+
+            <!-- BLOQUE D: CALIDAD DE SOFTWARE (VERIFICACIÓN VS VALIDACIÓN) -->
+            <div class="mnemonic-block">
+              <div class="mnemonic-block-header">
+                <span class="mnemonic-block-icon">🎯</span>
+                <div>
+                  <h4 class="mnemonic-block-title">Verificación vs. Validación: "Veri-CÓMO vs. Vali-QUÉ"</h4>
+                  <div class="mnemonic-block-subtitle">Barry Boehm / IEEE — La trampa lingüística más repetida en los parciales</div>
+                </div>
+              </div>
+
+              <div class="compare-grid">
+                <div class="compare-col" style="border-left: 3px solid #38bdf8;">
+                  <h4>🔍 Verificación (¿CÓMO?)</h4>
+                  <p><strong>"¿Estamos construyendo el producto CORRECTAMENTE?"</strong></p>
+                  <p>• Evalúa el proceso interno contra las especificaciones técnicas (SRS, diagramas, arquitectura).</p>
+                  <p>• <em>Enfoque:</em> ¿Cumplimos con la especificación técnica escrita al pie de la letra?</p>
+                </div>
+                <div class="compare-col" style="border-left: 3px solid #4ade80;">
+                  <h4>🎯 Validación (¿QUÉ?)</h4>
+                  <p><strong>"¿Estamos construyendo el producto CORRECTO?"</strong></p>
+                  <p>• Evalúa el producto final frente al usuario o cliente en su negocio real.</p>
+                  <p>• <em>Enfoque:</em> ¿Es esto lo que el cliente realmente necesitaba para resolver su problema?</p>
+                </div>
+              </div>
+              <div class="takeaway-box">
+                💡 <em>Mnemotecnia infalible:</em> <strong>Veri-CÓMO</strong> mira la especificación técnica. <strong>Vali-QUÉ</strong> mira la satisfacción del cliente.
+              </div>
+            </div>
+
+            <!-- BLOQUE E: FORMATOS DE ENTREVISTA -->
+            <div class="mnemonic-block">
+              <div class="mnemonic-block-header">
+                <span class="mnemonic-block-icon">📐</span>
+                <div>
+                  <h4 class="mnemonic-block-title">Formatos de Entrevista de Relevamiento (Geometría Mental)</h4>
+                  <div class="mnemonic-block-subtitle">Piramidal vs. Embudo vs. Rombo</div>
+                </div>
+              </div>
+
+              <div class="ladder-list">
+                <div class="ladder-step">
+                  <span class="ladder-badge best">🔺 Pirámide</span>
+                  <span class="ladder-name">Punta fina a base ancha</span>
+                  <span class="ladder-detail">Inicia con preguntas <strong>específicas y cerradas</strong> $\rightarrow$ Se expande gradualmente a preguntas <strong>generales y abiertas</strong>.</span>
+                </div>
+                <div class="ladder-step">
+                  <span class="ladder-badge best">🔻 Embudo</span>
+                  <span class="ladder-name">Boca ancha a tubo fino</span>
+                  <span class="ladder-detail">Inicia con preguntas <strong>generales y abiertas</strong> $\rightarrow$ Se cierra gradualmente a preguntas <strong>específicas y concluyentes</strong>.</span>
+                </div>
+                <div class="ladder-step">
+                  <span class="ladder-badge best">🔷 Rombo</span>
+                  <span class="ladder-name">Abre y Cierra</span>
+                  <span class="ladder-detail">Inicia con preguntas <strong>específicas</strong> $\rightarrow$ Abre a discusión <strong>general</strong> $\rightarrow$ Vuelve a cerrar en conclusiones <strong>específicas</strong>.</span>
+                </div>
+              </div>
+              <div class="takeaway-box">
+                📑 <em>Regla para Revisión de Registros:</em> Pedir siempre formularios <strong>USADOS</strong> (muestran tachaduras, notas al margen y la realidad operativa), <strong>NUNCA</strong> formularios en blanco.
+              </div>
+            </div>
+
+            <!-- BLOQUE F: GESTIÓN DE PROYECTO, TIEMPOS Y AMBIENTES -->
+            <div class="mnemonic-block">
+              <div class="mnemonic-block-header">
+                <span class="mnemonic-block-icon">⏱️</span>
+                <div>
+                  <h4 class="mnemonic-block-title">Gestión de Proyectos, Tiempos, Esfuerzo y Ambientes</h4>
+                  <div class="mnemonic-block-subtitle">Fórmulas, analogías y reglas de cátedra</div>
+                </div>
+              </div>
+
+              <div class="compare-grid">
+                <div class="compare-col">
+                  <h4>⚖️ PERT: "El 4 en el Medio"</h4>
+                  <p><code>te = (to + 4·tm + tp) / 6</code></p>
+                  <p>El 4 multiplica siempre al <strong>Más Probable (tm)</strong>. Se divide por 6 porque son 6 pesos totales: 1 optimista + 4 más probables + 1 pesimista.</p>
+                </div>
+                <div class="compare-col">
+                  <h4>👶 Ley de Fred Brooks</h4>
+                  <p><strong>"9 mujeres no hacen un bebé en 1 mes"</strong></p>
+                  <p>Sumar gente a un proyecto retrasado lo retrasa más debido al costo de inducción y a la explosión de canales de comunicación: <code>C = n(n - 1) / 2</code>.</p>
+                </div>
+                <div class="compare-col">
+                  <h4>⏱️ Regla 40-20-40</h4>
+                  <p><strong>"40 pensás, 20 picás, 40 probás"</strong></p>
+                  <p>40% Análisis/Diseño, 20% Codificación, 40% Pruebas. (Planificación &lt; 3%).<br><em>¡Ojo! En todo el ciclo de vida, el <strong>Mantenimiento</strong> insume el 60-80% del dinero.</em></p>
+                </div>
+                <div class="compare-col">
+                  <h4>📥 Fan-IN vs. Fan-OUT</h4>
+                  <p>• <strong>Fan-IN (Entrada):</strong> ¿Quién entra a mí? (cuántos me llaman). ¡Alto Fan-In es deseable, indica alta reutilización!<br>• <strong>Fan-OUT (Salida):</strong> ¿A cuántos llamo yo? (moderado 3-7 es sano; 30 es un módulo pulpo).</p>
+                </div>
+                <div class="compare-col">
+                  <h4>🏢 Los 3 Ambientes Segregados</h4>
+                  <p>• <strong>DEV:</strong> El taller (laboratorio experimental del desarrollador).<br>• <strong>QA / STAGE:</strong> Pista de choque cerrada (réplica con datos dummy).<br>• <strong>PROD:</strong> Autopista con público real (blindada, datos vivos).</p>
+                </div>
+                <div class="compare-col">
+                  <h4>🕵️ Myers y la Prueba Exitosa</h4>
+                  <p>Una prueba se considera exitosa si y solo si <strong>DESCUBRE un error nuevo no detectado</strong>.<br>Si la prueba da cero errores, la prueba falló en atrapar al culpable.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECCIÓN 4: FÓRMULAS, REGLAS Y NÚMEROS EXACTOS -->
+        <div class="cheat-card" style="margin-bottom:20px;">
           <h3>📐 4. Fórmulas, Reglas y Números Exactos de Cátedra</h3>
           <ul class="cheat-list">
             <li><strong>Éxito de estimación:</strong> Estimación inicial dentro del <strong>30%</strong> del costo final real + permite refinamiento progresivo.</li>
@@ -2474,6 +2634,7 @@
           </ul>
         </div>
 
+        <!-- SECCIÓN 5: LOS 30 CAZABOBOS OFICIALES -->
         <div class="cheat-card">
           <h3>🎯 5. El Gran Arsenal Cazabobos: 30 Trampas Mortales de Cátedra</h3>
           <ul class="cheat-list">
