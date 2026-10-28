@@ -1,7 +1,7 @@
 // Service Worker: Simulador 4to Parcial IS UCASAL
-// Version 7: Fix sticky sidebar con overflow-x: clip y align-self: start
+// Version 8: 140 preguntas, barajado dinamico de practica, reglas mnemotecnicas y 30 cazabobos
 
-const CACHE_NAME = 'simulador-is-v7';
+const CACHE_NAME = 'simulador-is-v8';
 const STATIC_ASSETS = [
   './',
   './index.html',
