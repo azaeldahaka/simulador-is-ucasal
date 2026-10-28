@@ -1,7 +1,7 @@
 // Service Worker: Simulador 4to Parcial IS UCASAL
-// Version 6: 4to Parcial, Sticky sidebar Tablet/PC, Impresion/PDF academica y Compartir tema
+// Version 7: Fix sticky sidebar con overflow-x: clip y align-self: start
 
-const CACHE_NAME = 'simulador-is-v6';
+const CACHE_NAME = 'simulador-is-v7';
 const STATIC_ASSETS = [
   './',
   './index.html',
