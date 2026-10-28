@@ -1,7 +1,7 @@
 // Service Worker: Simulador 2do Parcial IS UCASAL
-// Version 4: Selector de esquemas limpio (opciones atenuadas sin texto extra) y soporte 100% offline
+// Version 5: Diseño Apple iOS Premium + boton verificar compacto
 
-const CACHE_NAME = 'simulador-is-v4';
+const CACHE_NAME = 'simulador-is-v5';
 const STATIC_ASSETS = [
   './',
   './index.html',
