@@ -1,7 +1,7 @@
 // Service Worker: Simulador 2do Parcial IS UCASAL
-// Garantiza funcionamiento 100% offline sin conexion
+// Version 3: Blindaje anti-duplicados en esquemas interactivos y soporte 100% offline
 
-const CACHE_NAME = 'simulador-is-v2';
+const CACHE_NAME = 'simulador-is-v3';
 const STATIC_ASSETS = [
   './',
   './index.html',

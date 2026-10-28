@@ -860,7 +860,7 @@
 
     .picker-opt {
       min-height: 48px;
-      padding: 11px 12px;
+      padding: 10px 12px;
       border-radius: 10px;
       background: var(--surface-2);
       border: 1.5px solid var(--border);
@@ -872,10 +872,74 @@
       word-break: break-word;
       overflow-wrap: break-word;
       line-height: 1.35;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
-    .picker-opt:active { transform: scale(0.98); }
+    .picker-opt:active { transform: scale(0.985); }
     .picker-opt.active-opt { border-color: var(--accent); background: rgba(56, 189, 248, 0.18); color: var(--accent); }
+
+    .picker-opt.picker-opt-used {
+      background: rgba(15, 23, 42, 0.65);
+      border-color: #334155;
+      border-style: dashed;
+      color: #94a3b8;
+      cursor: default;
+    }
+    .picker-opt.picker-opt-used:active { transform: none; }
+
+    .picker-opt-txt {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .picker-opt-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .picker-opt-badge {
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .badge-active {
+      background: rgba(56, 189, 248, 0.2);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .badge-used {
+      background: rgba(239, 68, 68, 0.14);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      font-size: 0.7rem;
+    }
+    .btn-swap-mini {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.74rem;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 120ms;
+    }
+    .btn-swap-mini:active {
+      background: var(--accent);
+      color: #082f49;
+    }
 
     /* Cheat Sheet Section */
     .cheatsheet-grid {
@@ -1627,12 +1691,51 @@
       activePicker = { key, item, slotIdx };
 
       const slotObj = item.data.slots[slotIdx];
-      const currentVal = (diagAnswers[key] || {})[slotIdx] || '';
+      const ans = diagAnswers[key] || {};
+      const currentVal = ans[slotIdx] || '';
+
+      // Identificar que opciones ya fueron ubicadas en otras casillas de este esquema
+      const usedMap = {};
+      for (const sIdxStr in ans) {
+        const sI = parseInt(sIdxStr, 10);
+        const chosenVal = ans[sI];
+        if (chosenVal && sI !== slotIdx) {
+          usedMap[chosenVal] = {
+            slotIdx: sI,
+            label: item.data.slots[sI].label
+          };
+        }
+      }
 
       document.getElementById('picker-slot-title').textContent = slotObj.label;
       document.getElementById('picker-options').innerHTML = item.data.options.map((opt, oIdx) => {
-        const act = currentVal === opt ? 'active-opt' : '';
-        return `<button class="picker-opt ${act}" onclick="selectSlotOption(${oIdx})">${opt}</button>`;
+        const isCurrent = currentVal === opt;
+        const isUsedElsewhere = !!usedMap[opt];
+
+        if (isCurrent) {
+          return `
+            <div class="picker-opt active-opt" onclick="clearActiveSlot()" title="Toca para deseleccionar de esta casilla">
+              <span class="picker-opt-txt">${opt}</span>
+              <div class="picker-opt-actions">
+                <span class="picker-opt-badge badge-active">✓ Asignado aquí (toca para quitar)</span>
+              </div>
+            </div>`;
+        } else if (isUsedElsewhere) {
+          const usedInfo = usedMap[opt];
+          return `
+            <div class="picker-opt picker-opt-used" title="Esta opción ya está asignada en otra casilla">
+              <span class="picker-opt-txt">${opt}</span>
+              <div class="picker-opt-actions">
+                <span class="picker-opt-badge badge-used">🚫 Ya en ${usedInfo.label}</span>
+                <button class="btn-swap-mini" onclick="event.stopPropagation(); transferSlotOption(${oIdx}, ${usedInfo.slotIdx})" title="Mover de la otra casilla a esta">Mover aquí ➔</button>
+              </div>
+            </div>`;
+        } else {
+          return `
+            <div class="picker-opt" onclick="selectSlotOption(${oIdx})">
+              <span class="picker-opt-txt">${opt}</span>
+            </div>`;
+        }
       }).join('');
 
       document.getElementById('picker-backdrop').classList.add('open');
@@ -1642,7 +1745,40 @@
       if (!activePicker) return;
       const { key, item, slotIdx } = activePicker;
       if (!diagAnswers[key]) diagAnswers[key] = {};
-      diagAnswers[key][slotIdx] = item.data.options[optIdx];
+      
+      const chosenOpt = item.data.options[optIdx];
+
+      // Blindaje anti-duplicados: eliminar esta opcion de cualquier otra casilla del esquema
+      for (const s in diagAnswers[key]) {
+        if (diagAnswers[key][s] === chosenOpt) {
+          delete diagAnswers[key][s];
+        }
+      }
+
+      diagAnswers[key][slotIdx] = chosenOpt;
+      const keyToRender = key;
+      closePicker();
+      rerenderSingleCard(keyToRender);
+    }
+
+    function transferSlotOption(optIdx, oldSlotIdx) {
+      if (!activePicker) return;
+      const { key, item, slotIdx } = activePicker;
+      if (!diagAnswers[key]) diagAnswers[key] = {};
+
+      const chosenOpt = item.data.options[optIdx];
+
+      // Vaciar la casilla anterior para que no quede duplicada
+      delete diagAnswers[key][oldSlotIdx];
+
+      // Limpieza por seguridad
+      for (const s in diagAnswers[key]) {
+        if (diagAnswers[key][s] === chosenOpt) {
+          delete diagAnswers[key][s];
+        }
+      }
+
+      diagAnswers[key][slotIdx] = chosenOpt;
       const keyToRender = key;
       closePicker();
       rerenderSingleCard(keyToRender);
