@@ -860,85 +860,39 @@
 
     .picker-opt {
       min-height: 48px;
-      padding: 10px 12px;
+      padding: 12px 14px;
       border-radius: 10px;
       background: var(--surface-2);
       border: 1.5px solid var(--border);
       color: var(--text);
       font-weight: 700;
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       text-align: left;
       cursor: pointer;
       word-break: break-word;
       overflow-wrap: break-word;
-      line-height: 1.35;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      line-height: 1.4;
       width: 100%;
       box-sizing: border-box;
+      transition: transform 100ms var(--ease-out), border-color 120ms, opacity 120ms;
     }
 
     .picker-opt:active { transform: scale(0.985); }
-    .picker-opt.active-opt { border-color: var(--accent); background: rgba(56, 189, 248, 0.18); color: var(--accent); }
-
-    .picker-opt.picker-opt-used {
-      background: rgba(15, 23, 42, 0.65);
-      border-color: #334155;
-      border-style: dashed;
-      color: #94a3b8;
-      cursor: default;
-    }
-    .picker-opt.picker-opt-used:active { transform: none; }
-
-    .picker-opt-txt {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
-    .picker-opt-actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .picker-opt-badge {
-      font-size: 0.72rem;
-      padding: 2px 7px;
-      border-radius: 6px;
-      font-weight: 700;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .badge-active {
-      background: rgba(56, 189, 248, 0.2);
+    .picker-opt.active-opt {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.18);
       color: var(--accent);
-      border: 1px solid rgba(56, 189, 248, 0.4);
     }
-    .badge-used {
-      background: rgba(239, 68, 68, 0.14);
-      color: #fca5a5;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      font-size: 0.7rem;
-    }
-    .btn-swap-mini {
-      background: rgba(56, 189, 248, 0.15);
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      font-size: 0.74rem;
-      font-weight: 800;
-      padding: 4px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      white-space: nowrap;
-      flex-shrink: 0;
-      transition: background 120ms;
-    }
-    .btn-swap-mini:active {
-      background: var(--accent);
-      color: #082f49;
+
+    /* Atenuada pura sin texto extra cuando ya fue seleccionada */
+    .picker-opt:disabled,
+    .picker-opt.disabled-opt {
+      opacity: 0.28;
+      background: rgba(15, 23, 42, 0.5);
+      border-color: #242f42;
+      color: #64748b;
+      cursor: not-allowed;
+      pointer-events: none;
     }
 
     /* Cheat Sheet Section */
@@ -1694,47 +1648,28 @@
       const ans = diagAnswers[key] || {};
       const currentVal = ans[slotIdx] || '';
 
-      // Identificar que opciones ya fueron ubicadas en otras casillas de este esquema
-      const usedMap = {};
-      for (const sIdxStr in ans) {
-        const sI = parseInt(sIdxStr, 10);
-        const chosenVal = ans[sI];
-        if (chosenVal && sI !== slotIdx) {
-          usedMap[chosenVal] = {
-            slotIdx: sI,
-            label: item.data.slots[sI].label
-          };
+      // Conjunto de opciones ya usadas en otras casillas
+      const usedInOtherSlots = new Set();
+      for (const s in ans) {
+        if (parseInt(s, 10) !== slotIdx && ans[s]) {
+          usedInOtherSlots.add(ans[s]);
         }
       }
 
       document.getElementById('picker-slot-title').textContent = slotObj.label;
       document.getElementById('picker-options').innerHTML = item.data.options.map((opt, oIdx) => {
         const isCurrent = currentVal === opt;
-        const isUsedElsewhere = !!usedMap[opt];
+        const isUsed = usedInOtherSlots.has(opt);
 
         if (isCurrent) {
-          return `
-            <div class="picker-opt active-opt" onclick="clearActiveSlot()" title="Toca para deseleccionar de esta casilla">
-              <span class="picker-opt-txt">${opt}</span>
-              <div class="picker-opt-actions">
-                <span class="picker-opt-badge badge-active">✓ Asignado aquí (toca para quitar)</span>
-              </div>
-            </div>`;
-        } else if (isUsedElsewhere) {
-          const usedInfo = usedMap[opt];
-          return `
-            <div class="picker-opt picker-opt-used" title="Esta opción ya está asignada en otra casilla">
-              <span class="picker-opt-txt">${opt}</span>
-              <div class="picker-opt-actions">
-                <span class="picker-opt-badge badge-used">🚫 Ya en ${usedInfo.label}</span>
-                <button class="btn-swap-mini" onclick="event.stopPropagation(); transferSlotOption(${oIdx}, ${usedInfo.slotIdx})" title="Mover de la otra casilla a esta">Mover aquí ➔</button>
-              </div>
-            </div>`;
+          // Ya asignada a esta casilla: destacada con borde celeste
+          return `<button class="picker-opt active-opt" onclick="clearActiveSlot()">${opt}</button>`;
+        } else if (isUsed) {
+          // Ya asignada a otra casilla: simplemente atenuada y no seleccionable
+          return `<button class="picker-opt" disabled>${opt}</button>`;
         } else {
-          return `
-            <div class="picker-opt" onclick="selectSlotOption(${oIdx})">
-              <span class="picker-opt-txt">${opt}</span>
-            </div>`;
+          // Disponible
+          return `<button class="picker-opt" onclick="selectSlotOption(${oIdx})">${opt}</button>`;
         }
       }).join('');
 
@@ -1748,30 +1683,7 @@
       
       const chosenOpt = item.data.options[optIdx];
 
-      // Blindaje anti-duplicados: eliminar esta opcion de cualquier otra casilla del esquema
-      for (const s in diagAnswers[key]) {
-        if (diagAnswers[key][s] === chosenOpt) {
-          delete diagAnswers[key][s];
-        }
-      }
-
-      diagAnswers[key][slotIdx] = chosenOpt;
-      const keyToRender = key;
-      closePicker();
-      rerenderSingleCard(keyToRender);
-    }
-
-    function transferSlotOption(optIdx, oldSlotIdx) {
-      if (!activePicker) return;
-      const { key, item, slotIdx } = activePicker;
-      if (!diagAnswers[key]) diagAnswers[key] = {};
-
-      const chosenOpt = item.data.options[optIdx];
-
-      // Vaciar la casilla anterior para que no quede duplicada
-      delete diagAnswers[key][oldSlotIdx];
-
-      // Limpieza por seguridad
+      // Eliminar esta opcion de cualquier otra casilla del esquema para que nunca quede duplicada
       for (const s in diagAnswers[key]) {
         if (diagAnswers[key][s] === chosenOpt) {
           delete diagAnswers[key][s];
@@ -1798,7 +1710,6 @@
       activePicker = null;
     }
 
-    // Strict Binary Evaluation (UCASAL Rule: 100% match or 0 pts)
     function evaluateSingleItem(item) {
       if (item.kind === 'mc') {
         const userSet = mcAnswers[item.key] || new Set();
