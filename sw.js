@@ -1,7 +1,7 @@
-// Service Worker: Simulador 2do Parcial IS UCASAL
-// Version 5: Diseño Apple iOS Premium + boton verificar compacto
+// Service Worker: Simulador 4to Parcial IS UCASAL
+// Version 6: 4to Parcial, Sticky sidebar Tablet/PC, Impresion/PDF academica y Compartir tema
 
-const CACHE_NAME = 'simulador-is-v5';
+const CACHE_NAME = 'simulador-is-v6';
 const STATIC_ASSETS = [
   './',
   './index.html',

@@ -1,7 +1,7 @@
 {
-  "name": "Simulador 2do Parcial - Ing. de Software UCASAL",
+  "name": "Simulador 4to Parcial - Ing. de Software UCASAL",
   "short_name": "Simulador IS",
-  "description": "Simulador interactivo del 2do Parcial Teórico de Ingeniería de Software UCASAL. Funciona 100% offline sin conexión.",
+  "description": "Simulador interactivo del 4to Parcial Teórico de Ingeniería de Software UCASAL. Funciona 100% offline sin conexión.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Simulador IS" />
-  <title>Simulador 2do Parcial Teórico — Ingeniería de Software</title>
+  <title>Simulador 4to Parcial Teórico — Ingeniería de Software</title>
   <style>
     :root {
       --bg: #0b1120;
@@ -1061,49 +1061,402 @@
       .svg-slot:hover .slot-box { stroke: #facc15; }
     }
 
-    /* Tablet & Desktop Responsive Upgrade */
+    /* Tablet & Desktop Responsive Upgrade (Sticky Sidebar from 768px) */
     @media (min-width: 720px) {
       .matrix-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .slots-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .score-grid { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+      .score-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
       .sheet-backdrop { align-items: center; }
       .picker-sheet { border-radius: 16px; border: 1px solid var(--border); }
       .cheatsheet-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
-    @media (min-width: 980px) {
+    @media (min-width: 768px) {
       .header-inner {
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
       }
-      .mode-tabs { width: 430px; }
+      .mode-tabs { width: 420px; }
       .layout-wrap.exam-layout {
-        grid-template-columns: 330px minmax(0, 1fr);
+        grid-template-columns: 290px minmax(0, 1fr);
         align-items: start;
+        gap: 18px;
       }
       .exam-sidebar {
         position: sticky;
-        top: 86px;
+        top: calc(72px + env(safe-area-inset-top, 0px));
+        max-height: calc(100dvh - 86px);
+        overflow-y: auto;
+        scrollbar-width: thin;
+        z-index: 40;
       }
       .exam-layout .score-grid {
         grid-template-columns: repeat(5, minmax(0, 1fr));
       }
       .mobile-bottom-bar { display: none !important; }
-      body { padding-bottom: 32px; }
+      body { padding-bottom: 28px; }
     }
-    
-  </style>
+
+    @media (min-width: 1024px) {
+      .layout-wrap.exam-layout {
+        grid-template-columns: 330px minmax(0, 1fr);
+        gap: 22px;
+      }
+      .mode-tabs { width: 440px; }
+    }
+
+    /* Action buttons in sidebar for print/share */
+    .exam-actions-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .btn-action {
+      flex: 1;
+      min-height: 38px;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      color: var(--text-muted);
+      border-radius: 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: background 140ms, color 140ms, transform 100ms;
+    }
+    .btn-action:hover { background: rgba(30, 41, 59, 0.9); color: var(--text); }
+    .btn-action:active { transform: scale(0.97); }
+
+    /* Floating Toast Notification */
+    .toast-msg {
+      position: fixed;
+      bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--accent);
+      color: #f8fafc;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), opacity 220ms;
+      white-space: nowrap;
+    }
+    .toast-msg.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Print Header (academic exam sheet) */
+    .print-header { display: none; }
+
+    /* =========================================================
+       PRINT STYLESHEET (A4/Carta Optimized for Paper Study)
+       ========================================================= */
+    @media print {
+      @page {
+        margin: 1.2cm;
+        size: A4 portrait;
+      }
+
+      *, *::before, *::after {
+        box-shadow: none !important;
+        text-shadow: none !important;
+      }
+
+      html, body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        width: 100% !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 10pt !important;
+      }
+
+      /* Ocultar elementos interactivos y controles de navegacion */
+      .app-header, .mode-tabs, .mobile-bottom-bar, .exam-sidebar,
+      .sheet-backdrop, #practice-filters, .btn, .btn-verify,
+      .practice-actions, .timer-pill, .offline-badge, .toast-msg,
+      .exam-actions-row, #history-stat, #btn-install-pwa {
+        display: none !important;
+      }
+
+      /* Membrete formal para imprimir */
+      .print-header {
+        display: block !important;
+        border-bottom: 2px solid #000;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+      }
+
+      .print-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      .print-inst-name {
+        margin: 0;
+        font-size: 15pt;
+        font-weight: 900;
+        color: #000;
+        letter-spacing: 0.5px;
+      }
+
+      .print-sub-name {
+        margin: 2px 0 0;
+        font-size: 11.5pt;
+        font-weight: 700;
+        color: #333;
+      }
+
+      .print-meta-sub {
+        margin: 2px 0 0;
+        font-size: 9pt;
+        color: #555;
+      }
+
+      .print-badge-box {
+        border: 2px solid #000;
+        padding: 4px 10px;
+        font-size: 13pt;
+        font-weight: 900;
+        background: #f0f0f0;
+      }
+
+      .print-student-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 9.5pt;
+        margin-top: 10px;
+        padding-top: 6px;
+        border-top: 1px dashed #777;
+      }
+
+      /* Layout de impresion limpio */
+      .layout-wrap {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+      }
+
+      #content-area {
+        width: 100% !important;
+      }
+
+      .questions-list {
+        gap: 12pt !important;
+      }
+
+      /* Ruptura de pagina inteligente (evitar preguntas cortadas) */
+      .q-card {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        background: #fff !important;
+        border: 1px solid #aaa !important;
+        color: #000 !important;
+        margin-bottom: 12pt !important;
+        padding: 10pt !important;
+        border-radius: 8px !important;
+      }
+
+      .q-meta {
+        margin-bottom: 6pt !important;
+      }
+
+      .q-num-badge {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+        border: 1px solid #777 !important;
+        font-size: 8pt !important;
+      }
+
+      .q-unit-tag {
+        color: #444 !important;
+        font-size: 8pt !important;
+      }
+
+      .q-persp-tag {
+        border: 1px solid #666 !important;
+        color: #222 !important;
+        background: #eee !important;
+        font-size: 7.5pt !important;
+      }
+
+      .q-title {
+        color: #000 !important;
+        font-size: 10.5pt !important;
+        line-height: 1.35 !important;
+        margin-bottom: 8pt !important;
+      }
+
+      .choice-row {
+        background: #fff !important;
+        border: 1px solid #ccc !important;
+        color: #000 !important;
+        padding: 5pt 8pt !important;
+        min-height: auto !important;
+        margin-bottom: 4pt !important;
+        border-radius: 6px !important;
+      }
+
+      .choice-box {
+        border: 1.5px solid #000 !important;
+        background: #fff !important;
+        color: #000 !important;
+        width: 18px !important;
+        height: 18px !important;
+        min-width: 18px !important;
+      }
+
+      .choice-txt {
+        color: #000 !important;
+        font-size: 9pt !important;
+      }
+
+      .choice-letter {
+        color: #000 !important;
+        font-weight: 800 !important;
+      }
+
+      /* Esquemas en impresion */
+      .diag-wrapper {
+        background: #fff !important;
+        border: 1px solid #777 !important;
+        padding: 6pt !important;
+        border-radius: 6px !important;
+      }
+
+      .diag-hint {
+        color: #333 !important;
+        font-size: 8pt !important;
+      }
+
+      .diag-svg text {
+        fill: #000 !important;
+      }
+
+      .diag-svg rect {
+        stroke: #333 !important;
+      }
+
+      .diag-svg .slot-box {
+        fill: #fafafa !important;
+        stroke: #000 !important;
+        stroke-dasharray: 4, 3 !important;
+      }
+
+      .diag-svg .slot-txt {
+        fill: #000 !important;
+        font-weight: 700 !important;
+      }
+
+      .slots-list {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 5pt !important;
+      }
+
+      .slot-row {
+        background: #fafafa !important;
+        border: 1px solid #ccc !important;
+        padding: 4pt 7pt !important;
+        min-height: auto !important;
+        border-radius: 6px !important;
+      }
+
+      .slot-row-lbl {
+        color: #000 !important;
+        font-size: 8.5pt !important;
+      }
+
+      .slot-row-val {
+        color: #333 !important;
+        font-size: 8pt !important;
+      }
+
+      /* Matrices */
+      .matrix-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 4pt !important;
+      }
+
+      .matrix-item {
+        background: #fff !important;
+        border: 1px solid #ccc !important;
+        padding: 5pt 7pt !important;
+        min-height: auto !important;
+        border-radius: 6px !important;
+      }
+
+      .matrix-item .choice-txt {
+        color: #000 !important;
+        font-size: 8.5pt !important;
+      }
+
+      /* Respuestas correctas si se imprime corregido */
+      .choice-row.opt-correct, .matrix-item.opt-correct {
+        background: #e8f5e9 !important;
+        border-color: #2e7d32 !important;
+        font-weight: bold;
+      }
+
+      .choice-row.opt-wrong, .matrix-item.opt-wrong {
+        background: #ffebee !important;
+        border-color: #c62828 !important;
+      }
+
+      .trap-box {
+        display: block !important;
+        background: #f8fafc !important;
+        border: 1px solid #94a3b8 !important;
+        border-left: 4px solid #0284c7 !important;
+        color: #1e293b !important;
+        font-size: 8pt !important;
+        padding: 6pt 8pt !important;
+      }
+      .trap-box strong { color: #0369a1 !important; }
+    }
+</style>
 </head>
 <body>
 
+  <!-- ACADEMIC PRINT HEADER (Only visible on paper / PDF) -->
+  <div class="print-header">
+    <div class="print-title-row">
+      <div>
+        <h1 class="print-inst-name">UNIVERSIDAD CATÓLICA DE SALTA</h1>
+        <h2 class="print-sub-name">Ingeniería de Software · 4to Parcial Teórico</h2>
+        <p class="print-meta-sub">Unidades III, IV, V, VI (hasta prueba de Humo) · Duración: 20 min · Aprobación: 60 pts (60%)</p>
+      </div>
+      <div>
+        <div class="print-badge-box" id="print-tema-badge">TEMA A</div>
+      </div>
+    </div>
+    <div class="print-student-row">
+      <div><strong>Alumno:</strong> __________________________________________________</div>
+      <div><strong>Legajo:</strong> _______________</div>
+      <div><strong>Fecha:</strong> ___ / ___ / 2026</div>
+    </div>
+  </div>
   <!-- HEADER -->
   <header class="app-header">
     <div class="header-inner">
       <div class="brand-row">
         <div>
           <h1 class="brand-title">
-            <span>Simulador 2do Parcial Teórico</span>
+            <span>Simulador 4to Parcial Teórico</span>
             <span class="brand-badge" id="tema-badge">Tema A</span>
             <span class="offline-badge" id="offline-status-badge" title="Funciona 100% sin internet">⚡ Offline listo</span>
             <button class="btn-install" id="btn-install-pwa" style="display:none;" onclick="installPWA()">📲 Instalar App</button>
@@ -1130,7 +1483,7 @@
     <!-- SIDEBAR (Exam Mode) -->
     <aside class="exam-sidebar" id="exam-sidebar">
       <div class="sheet-meta">
-        <span class="sheet-title" id="sheet-title">Hoja Oficial · Parcial Nº 2</span>
+        <span class="sheet-title" id="sheet-title">Hoja Oficial · Parcial Nº 4</span>
         <span style="font-size:0.76rem;color:var(--text-muted);" id="history-stat">Sin intentos aún</span>
       </div>
 
@@ -1146,12 +1499,21 @@
         <button class="btn btn-success" id="btn-grade-exam" onclick="gradeExam()">✅ Corregir Parcial</button>
         <button class="btn btn-secondary" onclick="startNewExam()">🔄 Nuevo Tema</button>
       </div>
+
+      <div class="exam-actions-row">
+        <button class="btn-action" onclick="printExamSheet()" title="Imprimir u obtener PDF de este tema">🖨️ Imprimir / PDF</button>
+        <button class="btn-action" onclick="shareCurrentTema()" title="Compartir este tema con un compañero">🔗 Compartir</button>
+      </div>
     </aside>
 
     <!-- CONTENT AREA -->
     <section id="content-area">
       <!-- Filter bar only in Practice mode -->
       <div id="practice-filters" style="display:none; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="font-size:0.76rem; color:var(--text-muted); font-weight:700;">FILTRAR POR UNIDAD:</span>
+          <button class="btn-action" style="flex:0; padding:4px 10px; font-size:0.75rem;" onclick="printExamSheet()">🖨️ Imprimir Hoja</button>
+        </div>
         <div class="filter-scroller" id="filter-chips"></div>
       </div>
 
@@ -1305,6 +1667,68 @@
       pill.classList.toggle('urgent', secondsLeft <= 180 && !timerPaused && !examGraded);
     }
 
+    
+    // Deterministic PRNG for Tema A..L (allows classmates to get the exact same exam)
+    function seededRandom(seed) {
+      const x = Math.sin(seed++) * 10000;
+      return x - Math.floor(x);
+    }
+
+    function seededShuffle(arr, seed) {
+      const copy = [...arr];
+      let s = seed;
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(seededRandom(s++) * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    let currentTemaLetter = 'A';
+
+    function showToast(msg) {
+      const el = document.getElementById('toast-msg');
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2600);
+    }
+
+    function printExamSheet() {
+      const printBadge = document.getElementById('print-tema-badge');
+      if (printBadge) printBadge.textContent = `TEMA ${currentTemaLetter}`;
+      window.print();
+    }
+
+    async function shareCurrentTema() {
+      const url = `${window.location.origin}${window.location.pathname}#tema=${currentTemaLetter}`;
+      const shareData = {
+        title: `Simulador 4to Parcial IS - Tema ${currentTemaLetter}`,
+        text: `Hacé conmigo el Tema ${currentTemaLetter} del 4to Parcial de Ingeniería de Software (UCASAL) en el simulador:`,
+        url: url
+      };
+
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (e) {
+          // Si el usuario cancela o no es compatible, cae en el clipboard
+        }
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(url);
+          showToast(`✅ ¡Enlace del Tema ${currentTemaLetter} copiado al portapapeles!`);
+          return;
+        } catch (err) {}
+      }
+
+      // Fallback con prompt
+      prompt(`Copia y envía este enlace a tu compañero para hacer el Tema ${currentTemaLetter}:`, url);
+    }
+
     // Mode Switching
     function switchMode(mode) {
       appMode = mode;
@@ -1353,40 +1777,60 @@
     }
 
     // Build Balanced 10-Exercise Official Exam
-    function startNewExam() {
+        function startNewExam(forcedLetter) {
       examGraded = false;
       mcAnswers = {};
       diagAnswers = {};
       matrixAnswers = {};
 
-      const letter = String.fromCharCode(65 + Math.floor(Math.random() * 12));
+      let letter = forcedLetter;
+      if (!letter) {
+        const hashMatch = window.location.hash.match(/tema=([A-La-l])/);
+        if (hashMatch) {
+          letter = hashMatch[1].toUpperCase();
+        } else {
+          letter = String.fromCharCode(65 + Math.floor(Math.random() * 12));
+        }
+      } else {
+        letter = letter.toUpperCase();
+      }
+
+      currentTemaLetter = letter;
+      window.location.hash = `tema=${letter}`;
+
       document.getElementById('tema-badge').textContent = `Tema ${letter}`;
-      document.getElementById('sheet-title').textContent = `Parcial Nº 2 — Tema ${letter}`;
+      document.getElementById('sheet-title').textContent = `Parcial Nº 4 — Tema ${letter}`;
+      const printBadge = document.getElementById('print-tema-badge');
+      if (printBadge) printBadge.textContent = `TEMA ${letter}`;
+
       const banner = document.getElementById('final-banner');
       banner.className = 'final-score-banner';
       banner.innerHTML = '';
 
-      // Pick balanced MC across units (at least 1 from each unit + 1 extra)
+      // Seed numerica basada en la letra del Tema para que sea determinista entre companeros
+      let seed = (letter.charCodeAt(0) * 1103515245 + 12345) & 0x7fffffff;
+
+      // Seleccionar 7 MC balanceadas entre las 6 unidades oficiales
       const units = ['U3', 'U4', 'U5A', 'U5D', 'U6P', 'U6T'];
       const chosenMC = [];
       const usedIds = new Set();
       units.forEach(u => {
-        const pool = shuffle(DB.questions.filter(q => q.unit === u));
+        const pool = seededShuffle(DB.questions.filter(q => q.unit === u), seed++);
         if (pool.length) {
           chosenMC.push(pool[0]);
           usedIds.add(pool[0].id);
         }
       });
-      const restPool = shuffle(DB.questions.filter(q => !usedIds.has(q.id)));
+      const restPool = seededShuffle(DB.questions.filter(q => !usedIds.has(q.id)), seed++);
       while (chosenMC.length < 7 && restPool.length) {
         chosenMC.push(restPool.shift());
       }
 
-      const chosenDiags = shuffle(DB.diagrams).slice(0, 2);
-      const chosenMat = shuffle(DB.matrices)[0];
+      const chosenDiags = seededShuffle(DB.diagrams, seed++).slice(0, 2);
+      const chosenMat = seededShuffle(DB.matrices, seed++)[0];
 
-      // Interleave like the real UCASAL sheet (Ej 5 and Ej 9 diagrams, Ej 10 matrix)
-      const mcs = shuffle(chosenMC).map(cloneShuffledMC);
+      // Entrelazar segun formato oficial UCASAL (Ej 5 y 9 diagramas, Ej 10 matriz)
+      const mcs = seededShuffle(chosenMC, seed++).map(cloneShuffledMC);
       examItems = [
         { kind: 'mc', data: mcs[0], key: 'ex-1' },
         { kind: 'mc', data: mcs[1], key: 'ex-2' },
@@ -1984,5 +2428,7 @@
       startNewExam();
     });
   </script>
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast-msg" id="toast-msg"></div>
 </body>
 </html>
