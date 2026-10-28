@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Simulador 2do Parcial Teórico — Ingeniería de Software</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: #111827;
+      --surface-2: #1e293b;
+      --surface-3: #283548;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-strong: #0284c7;
+      --ok: #22c55e;
+      --ok-bg: rgba(34, 197, 94, 0.14);
+      --err: #ef4444;
+      --err-bg: rgba(239, 68, 68, 0.14);
+      --warn: #facc15;
+      --warn-bg: rgba(250, 204, 21, 0.12);
+      --radius: 14px;
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-text-size-adjust: 100%;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100dvh;
+      background: radial-gradient(circle at 50% 0%, #172554 0%, var(--bg) 52%);
+      padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    }
+
+    button, [role="button"], .chip, .choice-row, .matrix-item, .slot-row, .svg-slot, .nav-Tab {
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    input, select, textarea { font-size: 16px; }
+
+    /* Sticky Mobile-First Top Header */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px;
+    }
+
+    .header-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      background: rgba(56, 189, 248, 0.16);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .brand-sub {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin: 2px 0 0;
+    }
+
+    /* Mode Switcher */
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: #090d16;
+      padding: 4px;
+      border-radius: 11px;
+      border: 1px solid var(--border);
+    }
+
+    .mode-tab {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 9px 6px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 140ms var(--ease-out), color 140ms, transform 100ms var(--ease-out);
+      text-align: center;
+    }
+
+    .mode-tab:active { transform: scale(0.97); }
+
+    .mode-tab.active {
+      background: var(--surface-2);
+      color: var(--accent);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Timer Pill */
+    .timer-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    .timer-pill.urgent {
+      background: var(--err-bg);
+      border-color: var(--err);
+      color: #fca5a5;
+      animation: pulseWarn 1.2s infinite;
+    }
+
+    @keyframes pulseWarn {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.65; }
+    }
+
+    /* Layout Container */
+    .layout-wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 14px 14px 28px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    /* Sidebar / Exam Sheet Summary */
+    .exam-sidebar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .sheet-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .sheet-title {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .rules-banner {
+      background: rgba(250, 204, 21, 0.08);
+      border-left: 3px solid var(--warn);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      color: #fef08a;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    /* 10-cell UCASAL Score Grid */
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .score-cell {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 100ms var(--ease-out), border-color 140ms;
+    }
+
+    .score-cell:active { transform: scale(0.95); }
+    .score-cell.answered { border-color: var(--accent); background: rgba(56, 189, 248, 0.1); }
+    .score-cell.cell-ok { border-color: var(--ok); background: var(--ok-bg); color: #86efac; }
+    .score-cell.cell-err { border-color: var(--err); background: var(--err-bg); color: #fca5a5; }
+
+    .score-cell-lbl { font-size: 0.68rem; color: var(--text-muted); display: block; }
+    .score-cell-val { font-size: 0.86rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+    .final-score-banner {
+      display: none;
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 12px;
+      font-weight: 800;
+    }
+
+    .final-score-banner.pass { display: block; background: var(--ok-bg); border: 1px solid var(--ok); color: #86efac; }
+    .final-score-banner.fail { display: block; background: var(--err-bg); border: 1px solid var(--err); color: #fca5a5; }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      min-height: 46px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 0.88rem;
+      padding: 10px 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 100ms var(--ease-out), opacity 140ms, background 140ms;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent); color: #082f49; }
+    .btn-success { background: var(--ok); color: #052e16; }
+    .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+
+    /* Filter Chips Bar (Practice Mode) */
+    .filter-scroller {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 2px 10px;
+      scroll-snap-type: x proximity;
+      scrollbar-width: thin;
+    }
+
+    .chip {
+      scroll-snap-align: start;
+      flex-shrink: 0;
+      min-height: 40px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 100ms var(--ease-out), background 140ms;
+    }
+
+    .chip:active { transform: scale(0.96); }
+    .chip.active {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Question Cards */
+    .questions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .q-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      scroll-margin-top: 120px;
+      transition: border-color 180ms;
+    }
+
+    .q-card.graded-card-ok { border-color: var(--ok); }
+    .q-card.graded-card-err { border-color: var(--err); }
+
+    .q-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .q-num-badge {
+      background: var(--surface-2);
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 0.76rem;
+      padding: 4px 9px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .q-unit-tag {
+      font-size: 0.73rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .q-persp-tag {
+      font-size: 0.68rem;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .persp-agil { background: rgba(168, 85, 247, 0.18); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.35); }
+    .persp-prescriptiva { background: rgba(56, 189, 248, 0.14); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.3); }
+    .persp-ambas { background: rgba(250, 204, 21, 0.14); color: #fde047; border: 1px solid rgba(250,204,21,0.3); }
+
+    .q-title {
+      margin: 0 0 14px;
+      font-size: 1rem;
+      line-height: 1.48;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* Multiple Choice Option Rows */
+    .choices-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .choice-row {
+      min-height: 50px;
+      padding: 11px 13px;
+      border-radius: 10px;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      cursor: pointer;
+      transition: transform 100ms var(--ease-out), border-color 120ms, background 120ms;
+    }
+
+    .choice-row:active { transform: scale(0.988); }
+
+    .choice-row.selected {
+      background: rgba(56, 189, 248, 0.14);
+      border-color: var(--accent);
+    }
+
+    .choice-row.opt-correct {
+      background: var(--ok-bg);
+      border-color: var(--ok);
+    }
+
+    .choice-row.opt-wrong {
+      background: var(--err-bg);
+      border-color: var(--err);
+    }
+
+    .choice-row.opt-missed {
+      background: rgba(250, 204, 21, 0.12);
+      border-color: var(--warn);
+      border-style: dashed;
+    }
+
+    .choice-box {
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      border-radius: 6px;
+      border: 2px solid #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 900;
+      margin-top: 1px;
+      color: #082f49;
+    }
+
+    .choice-row.selected .choice-box {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .choice-row.opt-correct .choice-box {
+      background: var(--ok);
+      border-color: var(--ok);
+      color: #052e16;
+    }
+
+    .choice-row.opt-wrong .choice-box {
+      background: var(--err);
+      border-color: var(--err);
+      color: #fff;
+    }
+
+    .choice-txt {
+      font-size: 0.92rem;
+      line-height: 1.42;
+      color: #e2e8f0;
+    }
+
+    .choice-letter {
+      font-weight: 800;
+      color: var(--accent);
+      margin-right: 4px;
+    }
+
+    /* Interactive SVG Diagrams */
+    .diag-wrapper {
+      background: #090e1a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+    }
+
+    .diag-hint {
+      font-size: 0.78rem;
+      color: var(--accent);
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+
+    .diag-svg {
+      width: 100%;
+      height: auto;
+      min-width: 310px;
+      display: block;
+    }
+
+    .svg-slot { cursor: pointer; }
+    .svg-slot .slot-box {
+      fill: #1e293b;
+      stroke: #38bdf8;
+      stroke-width: 2;
+      stroke-dasharray: 4, 2;
+      transition: fill 140ms, stroke 140ms;
+    }
+    .svg-slot.filled .slot-box {
+      fill: #0c4a6e;
+      stroke: #38bdf8;
+      stroke-dasharray: none;
+    }
+    .svg-slot.slot-ok .slot-box {
+      fill: #14532d;
+      stroke: #22c55e;
+      stroke-dasharray: none;
+    }
+    .svg-slot.slot-err .slot-box {
+      fill: #7f1d1d;
+      stroke: #ef4444;
+      stroke-dasharray: none;
+    }
+    .svg-slot .slot-txt {
+      fill: #f8fafc;
+      font-size: 12px;
+      font-weight: 700;
+      pointer-events: none;
+    }
+
+    .slots-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .slot-row {
+      min-height: 50px;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform 100ms var(--ease-out), border-color 140ms;
+    }
+
+    .slot-row:active { transform: scale(0.985); }
+    .slot-row.filled { border-color: var(--accent); background: rgba(56, 189, 248, 0.1); }
+    .slot-row.slot-ok { border-color: var(--ok); background: var(--ok-bg); }
+    .slot-row.slot-err { border-color: var(--err); background: var(--err-bg); }
+
+    .slot-row-lbl {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    .slot-row-val {
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: var(--accent);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    /* Matrix Grid (10 Checkboxes like Ejercicio 10) */
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .matrix-item {
+      min-height: 48px;
+      padding: 10px 12px;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform 100ms var(--ease-out), border-color 120ms;
+    }
+
+    .matrix-item:active { transform: scale(0.985); }
+    .matrix-item.selected { background: rgba(56, 189, 248, 0.14); border-color: var(--accent); }
+    .matrix-item.opt-correct { background: var(--ok-bg); border-color: var(--ok); }
+    .matrix-item.opt-wrong { background: var(--err-bg); border-color: var(--err); }
+    .matrix-item.opt-missed { background: var(--warn-bg); border-color: var(--warn); border-style: dashed; }
+
+    /* Radar Cazabobos Feedback Box */
+    .trap-box {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid #475569;
+      border-left: 4px solid var(--accent);
+      font-size: 0.86rem;
+      line-height: 1.5;
+      color: #cbd5e1;
+      display: none;
+    }
+
+    .trap-box.visible { display: block; }
+    .trap-box strong { color: var(--accent); }
+
+    .practice-actions {
+      margin-top: 12px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* Bottom Action Bar on Mobile (Exam Mode) */
+    .mobile-bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 190;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    /* Bottom Sheet Picker for Diagram Slots */
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(2, 6, 23, 0.75);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .sheet-backdrop.open { display: flex; }
+
+    .picker-sheet {
+      width: 100%;
+      max-width: 560px;
+      max-height: 82dvh;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-radius: 20px 20px 0 0;
+      padding: 16px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .picker-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .picker-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin: 0;
+    }
+
+    .picker-options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .picker-opt {
+      min-height: 48px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      color: var(--text);
+      font-weight: 700;
+      font-size: 0.92rem;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .picker-opt:active { transform: scale(0.98); }
+    .picker-opt.active-opt { border-color: var(--accent); background: rgba(56, 189, 248, 0.18); color: var(--accent); }
+
+    /* Cheat Sheet Section */
+    .cheatsheet-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .cheat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .cheat-card h3 {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 1rem;
+    }
+
+    .cheat-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+    }
+
+    .cheat-table th, .cheat-table td {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .cheat-table th { background: var(--surface-2); color: var(--accent); }
+
+    .cheat-list {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: #e2e8f0;
+    }
+
+    .cheat-list li { margin-bottom: 6px; }
+
+    /* Hover gated strictly for mouse/trackpad devices */
+    @media (hover: hover) and (pointer: fine) {
+      .choice-row:hover { border-color: #64748b; }
+      .slot-row:hover { border-color: #64748b; }
+      .matrix-item:hover { border-color: #64748b; }
+      .chip:hover { border-color: #64748b; color: var(--text); }
+      .btn:hover { opacity: 0.92; }
+      .picker-opt:hover { border-color: var(--accent); }
+      .svg-slot:hover .slot-box { stroke: #facc15; }
+    }
+
+    /* Tablet & Desktop Responsive Upgrade */
+    @media (min-width: 720px) {
+      .matrix-grid { grid-template-columns: repeat(2, 1fr); }
+      .slots-list { grid-template-columns: repeat(2, 1fr); }
+      .score-grid { grid-template-columns: repeat(10, 1fr); }
+      .sheet-backdrop { align-items: center; }
+      .picker-sheet { border-radius: 16px; border: 1px solid var(--border); }
+      .cheatsheet-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (min-width: 980px) {
+      .header-inner {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .mode-tabs { width: 430px; }
+      .layout-wrap.exam-layout {
+        grid-template-columns: 330px 1fr;
+        align-items: start;
+      }
+      .exam-sidebar {
+        position: sticky;
+        top: 86px;
+      }
+      .exam-layout .score-grid {
+        grid-template-columns: repeat(5, 1fr);
+      }
+      .mobile-bottom-bar { display: none !important; }
+      body { padding-bottom: 32px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-row">
+        <div>
+          <h1 class="brand-title">
+            <span>Simulador 2do Parcial Teórico</span>
+            <span class="brand-badge" id="tema-badge">Tema A</span>
+          </h1>
+          <p class="brand-sub">Ingeniería de Software · UCASAL · U.III a U.VI (hasta HUMO)</p>
+        </div>
+        <div class="timer-pill" id="timer-pill" onclick="toggleTimerPause()" title="Tocar para pausar/reanudar">
+          <span id="timer-icon">⏱️</span>
+          <span id="timer-display">20:00</span>
+        </div>
+      </div>
+
+      <nav class="mode-tabs" aria-label="Modo de estudio">
+        <button class="mode-tab active" id="tab-exam" onclick="switchMode('exam')">🎯 Examen (10)</button>
+        <button class="mode-tab" id="tab-practice" onclick="switchMode('practice')">📚 Práctica (100)</button>
+        <button class="mode-tab" id="tab-cheat" onclick="switchMode('cheat')">🛡️ Cazabobos</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="layout-wrap exam-layout" id="main-wrap">
+
+    <!-- SIDEBAR (Exam Mode) -->
+    <aside class="exam-sidebar" id="exam-sidebar">
+      <div class="sheet-meta">
+        <span class="sheet-title" id="sheet-title">Hoja Oficial · Parcial Nº 2</span>
+        <span style="font-size:0.76rem;color:var(--text-muted);" id="history-stat">Sin intentos aún</span>
+      </div>
+
+      <div class="rules-banner">
+        <strong>Regla de Cátedra:</strong> 60% (60 pts) para aprobar · 20 min. Se deben marcar <strong>todas</strong> las respuestas correctas; <strong>no hay puntaje parcial</strong> (1 error = 0 pts en ese ejercicio).
+      </div>
+
+      <div class="final-score-banner" id="final-banner"></div>
+
+      <div class="score-grid" id="score-grid"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-success" id="btn-grade-exam" onclick="gradeExam()">✅ Corregir Parcial</button>
+        <button class="btn btn-secondary" onclick="startNewExam()">🔄 Nuevo Tema</button>
+      </div>
+    </aside>
+
+    <!-- CONTENT AREA -->
+    <section id="content-area">
+      <!-- Filter bar only in Practice mode -->
+      <div id="practice-filters" style="display:none; margin-bottom:12px;">
+        <div class="filter-scroller" id="filter-chips"></div>
+      </div>
+
+      <!-- Cards container -->
+      <div class="questions-list" id="cards-root"></div>
+
+      <!-- Cheat-sheet container -->
+      <div class="cheatsheet-grid" id="cheatsheet-root" style="display:none;"></div>
+    </section>
+  </main>
+
+  <!-- MOBILE STICKY BOTTOM BAR (Exam Mode) -->
+  <div class="mobile-bottom-bar" id="mobile-bar">
+    <div style="font-size:0.82rem; font-weight:700; color:var(--text-muted);">
+      Respondidas: <strong style="color:var(--accent);" id="mob-progress">0 / 10</strong>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-secondary" style="min-height:42px; padding:8px 12px;" onclick="startNewExam()">🔄 Tema</button>
+      <button class="btn btn-success" style="min-height:42px; padding:8px 14px;" onclick="gradeExam()">✅ Corregir</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM SHEET PICKER FOR DIAGRAMS -->
+  <div class="sheet-backdrop" id="picker-backdrop" onclick="closePicker(event)">
+    <div class="picker-sheet" onclick="event.stopPropagation()">
+      <div class="picker-header">
+        <div>
+          <h3 class="picker-title" id="picker-slot-title">Seleccionar concepto</h3>
+          <p style="margin:4px 0 0; font-size:0.78rem; color:var(--text-muted);">Toca el nombre correspondiente para colocarlo en el esquema:</p>
+        </div>
+        <button class="btn btn-secondary" style="flex:0; min-height:36px; padding:6px 10px;" onclick="closePicker()">✕</button>
+      </div>
+      <div class="picker-options" id="picker-options"></div>
+      <button class="btn btn-secondary" onclick="clearActiveSlot()">🗑️ Vaciar esta casilla</button>
+    </div>
+  </div>
+
+  <script>
+    const DB = {"questions": [{"id": "u3-q1", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "prescriptiva", "text": "Según la cátedra, la 'Estimación' de un proyecto de software se define formalmente como:", "options": ["El proceso de selección de una estrategia para la construcción de productos finales y asignación de recursos.", "La recolección y almacenamiento de datos sobre tiempos, costos e hitos para comparar el progreso real con el programado.", "El proceso que proporciona un valor a un conjunto de variables para la realización de un trabajo, dentro de un rango aceptable de error.", "El cálculo exacto e invariable del presupuesto final antes de relevar los requerimientos.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Definir la estrategia y asignar recursos corresponde a Planificación (Estructurar/Organizar), y recolectar datos para comparar progreso real vs. programado corresponde a Seguimiento (Medir/Comparar). La Estimación es Prever/Aproximar dentro de un rango aceptable de error."}, {"id": "u3-q2", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "prescriptiva", "text": "El 'Seguimiento' de proyectos consiste en...", "options": ["Estructurar las actividades concurrentes y solapadas antes de iniciar la codificación.", "Prever los tiempos mínimos y máximos en los que estará disponible una funcionalidad.", "Aplicar el modelo COCOMO para recalcular las líneas de código cada semana.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [4], "trapNote": "¡Trampa clásica de 'Ninguna de las anteriores'! Estructurar actividades es Planificación y prever tiempos mínimos/máximos es Estimación. El Seguimiento es recolectar datos sobre tiempos, recursos, costos e hitos para comparar evolución real vs. programada."}, {"id": "u3-q3", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "prescriptiva", "text": "Respecto a las Métricas de Software, es correcto afirmar que:", "options": ["Sólo son aplicables una vez finalizada la etapa de codificación para contar líneas de código reales.", "Son la aplicación continua de técnicas basadas en medidas de los procesos y productos para producir información de gestión significativa y a tiempo.", "Permiten detectar y corregir anticipadamente errores de los componentes aún antes de llegar a la codificación.", "Se utilizan para mejorar tanto los procesos de desarrollo como los productos obtenidos de ellos.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1, 2, 3], "trapNote": "¡Atención al puntaje binario múltiple! Hay 3 afirmaciones verdaderas según la pág. 13 del PDF. NO es 'Todas las anteriores' porque es falso que sólo se apliquen tras codificar: las métricas son aplicables en TODO el ciclo de vida."}, {"id": "u3-q4", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "prescriptiva", "text": "Según la clasificación de métricas, las 'Métricas Indirectas' son aquellas que...", "options": ["Aun observadores calificados podrían asignar diferentes valores para una misma medida.", "Miden exclusivamente el proceso de desarrollo, como horas/hombre o esfuerzo.", "Pueden ser observadas directamente, tales como líneas de código o número de defectos.", "No pueden ser observadas directamente, sino que se obtienen a partir de otras medidas, como la productividad o la calidad.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [3], "trapNote": "Asignar distintos valores por observadores calificados define Métricas Subjetivas; horas/hombre define Métricas de Proceso; LDC o defectos define Métricas Directas. Productividad y Calidad son los dos ejemplos textuales de Métricas Indirectas (pág. 15)."}, {"id": "u3-q5", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "prescriptiva", "text": "¿Cuáles de los siguientes elementos corresponden a 'Métricas de Producto' según el esquema de la cátedra?", "options": ["Puntos de Función y Líneas de Código.", "Tiempo de Desarrollo y Esfuerzo en horas/hombre.", "Fiabilidad, Corrección de Programas y Mantenibilidad.", "Costo de Proceso y Número de Recursos.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [0, 2], "trapNote": "En el PDF (pág. 16), las Métricas de Productos se dividen en Tamaño (LDC, Puntos de Función) y Calidad (Corrección, Fiabilidad, Mantenibilidad). Tiempo, Esfuerzo, Costo y Recursos son Métricas de Procesos."}, {"id": "u3-q6", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "prescriptiva", "text": "Se entiende que un método de estimación es exitoso si...", "options": ["Garantiza un 0% de desvío entre la estimación inicial y el costo final real.", "La estimación inicial está dentro del 30% de desviación del costo final real y permite refinamiento durante el Ciclo de Vida.", "Se realiza una única vez al inicio del proyecto sin modificarse en fases posteriores.", "Sólo puede ser interpretado por el Director de Proyecto para evitar sesgos en el equipo.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 18 del PDF: éxito = desviación inicial <= 30% del costo real, permite refinamiento durante el CV, es fácil de usar, sus reglas son entendidas por todos los involucrados, está documentado y soportado por herramientas."}, {"id": "u3-q7", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "prescriptiva", "text": "La Estimación por Puntos de Función (Allan Albrecht, 1979) tiene como característica fundamental que:", "options": ["Mide el tamaño del software basándose en el lenguaje de programación elegido.", "Mide el tamaño del software calificando la funcionalidad externa, basándose en el diseño lógico e independientemente de la tecnología.", "Pondera 14 características generales del sistema en una escala de 1 a 10.", "Calcula el Factor de Ajuste mediante la fórmula FA = (TDI x 0.10) + 0.35.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Ojo con los números trampa: las 14 características se ponderan de 0 a 5 (0=Sin influencia, 5=Esencial), y la fórmula real es FA = (TDI x 0.01) + 0.65 (lo que varía el ajuste entre 0.65 y 1.35)."}, {"id": "u3-q8", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "prescriptiva", "text": "En el método de Puntos de Función, los cinco 'Parámetros básicos externos' definidos para valorar la aplicación son:", "options": ["Clases, Métodos, Atributos, Paquetes y Componentes.", "Pantallas, Reportes, Tablas SQL, APIs y Usuarios.", "Entrada, Salida, Consultas, Ficheros (Grupos de Datos) Lógicos Internos y Ficheros Lógicos Externos.", "Esfuerzo, Tiempo, Costo, Alcance y Calidad.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Los 5 parámetros IFPUG (págs. 21 y 24) son: Entrada (3-4-6), Salida (4-5-7), Consulta (3-4-6), Fichero Lógico Interno (7-10-15) y Fichero Lógico Externo (5-7-10)."}, {"id": "u3-q9", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "prescriptiva", "text": "En el modelo de estimación COCOMO de Barry Boehm (1981), un proyecto en 'Modo Orgánico' es aquel que...", "options": ["Debe desarrollarse bajo restricciones de hardware, software y operativas muy estrictas.", "Es de tamaño y complejidad intermedia, con equipos de experiencia mixta.", "Se desarrolla exclusivamente utilizando metodologías ágiles como Scrum o XP.", "Es relativamente pequeño y sencillo, con equipos pequeños de buena experiencia en la aplicación y requisitos poco rígidos.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [3], "trapNote": "En COCOMO (aplicado a cascada, pág. 30): Orgánico = pequeño/sencillo, equipo experimentado, requisitos poco rígidos. Semirígido = intermedio. Rígido = restricciones operativas/hard/soft muy estrictas."}, {"id": "u3-q10", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "prescriptiva", "text": "El 'Modelo Intermedio' de COCOMO se diferencia del 'Modelo Básico' porque...", "options": ["Calcula el esfuerzo únicamente en función del tamaño expresado en KDSI (miles de instrucciones).", "Evalúa el impacto de los conductores de costo de manera separada en cada fase individual (análisis, diseño, etc.).", "Calcula el esfuerzo en función del tamaño del programa y de 15 'conductores de costo' (producto, hardware, personal y proyecto).", "Reemplaza las líneas de código por Puntos de Historia en escala Fibonacci.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Calcular sólo con KDSI es el Modelo Básico; evaluar el impacto por cada fase (análisis, diseño, etc.) es el Modelo Detallado. El Modelo Intermedio suma los 15 conductores de costo (Producto, Hardware, Personal y Proyecto)."}, {"id": "u3-q11", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "agil", "text": "Al comparar la estimación tradicional por Puntos de Función (PF) frente a los Puntos de Historia (PH) ágiles, es FALSO afirmar que:", "options": ["Los PF miden el tamaño absoluto de lo que HACE el sistema, independientemente del equipo.", "Los PH son una métrica propia e intransferible de cada equipo basada en el empirismo.", "Los PH permiten comparar objetivamente qué equipo de la empresa es más rápido que otro.", "Los PF requieren una especificación funcional completa inicial, mientras los PH evolucionan con el backlog.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "¡Ojo que pide la FALSA! Los Puntos de Historia son relativos e intransferibles a cada equipo (pág. 36); usarlos para comparar velocidad entre dos equipos distintos es un antipatrón clásico."}, {"id": "u3-q12", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "agil", "text": "Según la Regla de Oro del 'Triángulo de la Estimación Ágil', un Punto de Historia combina tres dimensiones:", "options": ["Alcance, Precio y Tiempo cronológico en horas.", "Horas ideales, Horas reales y Horas de retrabajo.", "Esfuerzo (volumen de trabajo), Complejidad (dificultad técnica/lógica) y Riesgo / Incertidumbre (lo desconocido).", "Análisis, Codificación y Pruebas.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Pág. 37 del PDF: 'Regla de Oro: No estimamos en horas; estimamos en esfuerzo + complejidad + riesgo/incertidumbre'."}, {"id": "u3-q13", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "agil", "text": "En la estimación ágil, la 'Historia Ancla' y la 'Velocity' (Velocidad) cumplen con lo siguiente:", "options": ["La Velocity la define el Product Owner el día 1 antes de comenzar el primer Sprint.", "La Historia Ancla es la tarea más compleja y riesgosa del proyecto para fijar el techo de Fibonacci.", "La Historia Ancla es la tarea más pequeña, conocida por todos y de menor riesgo usada como referencia para comparar.", "La Velocity es empírica: se calcula promediando los puntos completados tras los primeros Sprints (ej. 3 sprints).", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2, 3], "trapNote": "Págs. 38 y 39: La Historia Ancla es la más pequeña, conocida y de menor riesgo (base de comparación), y la Velocity jamás se adivina el día 1 ni se impone desde afuera: se mide empíricamente."}, {"id": "u3-q14", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "ambas", "text": "En la gestión del Trinomio Alcance-Precio-Tiempo (Triángulo de Hierro), ¿qué ocurre cuando se invierte el paradigma de Cascada a Scrum?", "options": ["En Cascada el Tiempo y Costo son fijos, mientras que el Alcance es variable.", "En Scrum el Alcance es fijo por contrato, y el Sprint se extiende hasta terminar todas las historias.", "En Cascada el Alcance es fijo (definido al inicio) y Tiempo/Costo son estimados; en Scrum Tiempo y Costo son fijos y el Alcance es variable.", "En Scrum desaparece el Triángulo de Hierro y se pueden fijar las tres esquinas sin consecuencias.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Tabla clave de la pág. 46: Cascada fija el Alcance (riesgo: retrasos y sobrecostos). Scrum fija Tiempo (timebox de 2-4 semanas) y Costo (equipo fijo), haciendo variable el Alcance priorizado en el Backlog."}, {"id": "u3-q15", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "ambas", "text": "Si un cliente exige mantener todo el Alcance fijo, reducir el Tiempo de entrega y recortar el Presupuesto, ¿qué variable oculta absorbe el impacto?", "options": ["La Velocidad empírica se duplica automáticamente.", "El Grado de Influencia Total (TDI).", "La Calidad del software (generando deuda técnica, código frágil y falta de pruebas).", "La Modularidad horizontal.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Pág. 44: Forzar los tres vértices del triángulo de hierro destruye el centro: la Calidad del Software, provocando deuda técnica y fallas críticas en producción."}, {"id": "u4-q1", "unit": "U4", "unitLabel": "Unidad IV · Planificación y Control", "perspective": "prescriptiva", "text": "En la relación gente-trabajo de un proyecto de software retrasado, añadir nuevos desarrolladores en los últimos meses...", "options": ["Aumenta linealmente la productividad global en proporción exacta a los desarrolladores sumados.", "Reduce los caminos de comunicación entre los miembros del equipo.", "Puede reducir la productividad global y retrasar aún más la entrega debido al aumento de los canales de comunicación y curva de aprendizaje.", "Elimina el camino crítico de la red PERT.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Ley de Brooks y ejemplo numérico de págs. 8-9 del PDF 07: la relación entre personas y productividad NO es lineal porque al pasar de 4 a 6 personas los caminos de comunicación suben drásticamente penalizando la productividad anual."}, {"id": "u4-q2", "unit": "U4", "unitLabel": "Unidad IV · Planificación y Control", "perspective": "prescriptiva", "text": "Según la directriz conocida como 'Regla 40-20-40' para la distribución de esfuerzos en el desarrollo de software:", "options": ["40% Planificación, 20% Análisis y Diseño, 40% Codificación.", "40% Análisis y Diseño, 20% Prueba y Depuración, 40% Codificación.", "40% Codificación, 20% Documentación, 40% Mantenimiento.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [4], "trapNote": "¡Cazabobos clásico con 'Ninguna de las anteriores'! La regla 40-20-40 real (pág. 11) asigna: 40-50% Análisis y Diseño, sólo 15-20% Codificación, y 30-40% Prueba y Depuración. (La planificación se mantiene bajo el 3%)."}, {"id": "u4-q3", "unit": "U4", "unitLabel": "Unidad IV · Planificación y Control", "perspective": "prescriptiva", "text": "¿En qué momentos se debe realizar la Planificación Temporal según la cátedra?", "options": ["Exclusivamente durante la fase de Inicio una vez firmado el contrato.", "En la etapa de Propuestas, durante la fase de Inicio y a lo largo de todo el proyecto.", "Solamente cuando se detecta un desvío en el camino crítico.", "Al finalizar el Análisis de Requisitos y nunca antes.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 12 del PDF 07: Se hace en 3 momentos: 1) Etapa de Propuestas (agenda competitiva), 2) Fase de Inicio (guía del equipo al contratar), y 3) A lo largo del proyecto (ajustar a tiempo o confirmar avance)."}, {"id": "u4-q4", "unit": "U4", "unitLabel": "Unidad IV · Planificación y Control", "perspective": "prescriptiva", "text": "Los métodos de red de tareas como PERT y CPM permiten determinar:", "options": ["El camino crítico del proyecto.", "Estimaciones de tiempo más probables mediante modelos estadísticos como te = (to + 4.tm + tp) / 6.", "Los límites de tiempo que definen el margen total de holgura de cada tarea individual.", "La cohesión funcional de cada módulo del código fuente.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [0, 1, 2], "trapNote": "Pág. 13 del PDF 07: PERT y CPM determinan el camino crítico, el tiempo esperado estadístico te = (to + 4.tm + tp)/6 y los márgenes de holgura. La cohesión funcional pertenece al Diseño Modular, por lo que marcar 'Todas las anteriores' anula el punto."}, {"id": "u4-q5", "unit": "U4", "unitLabel": "Unidad IV · Planificación y Control", "perspective": "prescriptiva", "text": "En la planificación temporal mediante redes de tareas, el 'Margen total de holgura' se define como:", "options": ["La suma del comienzo más temprano y la duración de la tarea.", "Lo más pronto que puede comenzar una tarea cuando todas las precedentes terminan en el mínimo tiempo.", "La cantidad de tiempo sobrante o margen permitido en la planificación de tareas de forma que el camino de la red se mantenga dentro de la agenda.", "El porcentaje adicional del 30% reservado para pruebas de regresión.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Definición textual de la pág. 14 del PDF 07. Sumar comienzo más temprano + duración define el 'Final más temprano', no la holgura."}, {"id": "u4-q6", "unit": "U4", "unitLabel": "Unidad IV · Planificación y Control", "perspective": "prescriptiva", "text": "Respecto al costo total a lo largo de la vida del software, la cátedra destaca que:", "options": ["El esfuerzo empleado termina definitivamente al finalizar la fase de construcción e instalación.", "La etapa de planificación consume el mayor costo del ciclo de vida (más del 50%).", "El esfuerzo de mantenimiento llegará a ser el factor de mayor costo, y un objetivo principal de la IS es ayudar a reducirlo.", "La codificación siempre supera en costo al mantenimiento evolutivo.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Pág. 14 del PDF 07: 'El esfuerzo empleado no termina al finalizar la construcción. El esfuerzo de mantenimiento llegará a ser el factor de mayor costo.'"}, {"id": "u4-q7", "unit": "U4", "unitLabel": "Unidad IV · Planificación y Control", "perspective": "prescriptiva", "text": "El proceso de 'Control' dentro del Seguimiento y Control del proyecto se define formalmente en cuatro pasos ordenados:", "options": ["Planificar, Codificar, Probar y Desplegar.", "Descubrir, Analizar, Modelar y Validar.", "Definir una medida, Registrar el avance, Calcular la desviación y Tomar acciones correctivas.", "Reasignar recursos, Despedir personal, Recortar calidad y Posponer la entrega.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Pág. 17 del PDF 07: 1. Definir una medida -> 2. Registrar el avance -> 3. Calcular la desviación -> 4. Tomar acciones correctivas. (Descubrir, Analizar, Modelar, Validar son los 4 pasos de Ing. de Requerimientos)."}, {"id": "u4-q8", "unit": "U4", "unitLabel": "Unidad IV · Planificación y Control", "perspective": "prescriptiva", "text": "En el Sistema de Control del Proyecto, los peligros que generan problemas financieros y técnicos se categorizan en tres fuentes:", "options": ["Hardware, Red y Base de Datos.", "Perturbaciones, Personal y Entorno del Proyecto.", "Cliente, Proveedor y Competencia.", "Sintaxis, Semántica y Compilación.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 18 del PDF 07: Perturbaciones (cambios en requisitos, errores/fallos), Personal (inadecuado, pocas/demasiadas personas) y Entorno del Proyecto (metodología sin definir, tardía detección de errores)."}, {"id": "u4-q9", "unit": "U4", "unitLabel": "Unidad IV · Planificación y Control", "perspective": "prescriptiva", "text": "Cuando la fecha de finalización (Ff) de un proyecto ya ha sido establecida irrevocablemente desde afuera...", "options": ["Se define primero la fecha de inicio y se suma libremente el esfuerzo deseado.", "El equipo debe estimar hacia atrás (Ff - ?) para determinar la fecha de inicio estimada y cómo organizar los pasos.", "No es necesario realizar planificación temporal porque la fecha ya es conocida.", "Se omite la etapa de pruebas para llegar siempre a tiempo.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 5 del PDF 07: Perspectiva (a) Fecha de Finalización OBLIGATORIA -> se retrocede paso a paso (Ff - ?) hasta obtener una Fecha de Inicio ESTIMADA."}, {"id": "u4-q10", "unit": "U4", "unitLabel": "Unidad IV · Planificación y Control", "perspective": "agil", "text": "En el seguimiento de proyectos bajo marcos ágiles, las herramientas visuales clave mencionadas para comparar evolución real vs. esperada son:", "options": ["Diagrama Entidad-Relación y Diccionario de Datos.", "Tablero de Tareas (Kanban/Scrum Taskboard) y Gráfico Burn Down Chart.", "Árboles de decisión y Tablas de verdad.", "Únicamente documentos impresos firmados al cierre del año.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 10 del PDF 06: El seguimiento se apoya visualmente en el TABLERO DE TAREAS y el BURN DOWN CHART."}, {"id": "u5a-q1", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "prescriptiva", "text": "En la Determinación de Requerimientos, el 'Sistema Objeto' es...", "options": ["El código ejecutable compilado bajo el paradigma Orientado a Objetos.", "Exclusivamente el software de base de datos que almacena las tablas del cliente.", "La percepción de la realidad que tiene el analista, involucrando gente, documentos, procedimientos, datos y sistema de información.", "La realidad física absoluta e independiente del observador.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "¡Pregunta favorita de Peralta! Pág. 3 del PDF 09: 'La percepción de la realidad que tenga el analista constituye el Sistema Objeto', del cual el Sistema de Información es sólo una parte."}, {"id": "u5a-q2", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "prescriptiva", "text": "Según las definiciones de Análisis de Requerimientos, los 'Requerimientos del Usuario' se diferencian de los 'Requerimientos del Sistema' porque los del Usuario son:", "options": ["Descripciones detalladas de las tablas, claves foráneas y endpoints REST.", "Descripciones abstractas, de alto nivel, sobre lo que se espera del sistema.", "Propiedades exclusivas del hardware como memoria RAM y discos.", "Restricciones internas del compilador.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 6 del PDF 09 (Esquema 1-2-3-4): 1) Requerimientos del Usuario = Descripciones abstractas, de alto nivel. 2) Requerimientos del Sistema = Descripción detallada de lo que el sistema debe hacer."}, {"id": "u5a-q3", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "prescriptiva", "text": "Los 'Requerimientos Funcionales' describen...", "options": ["Únicamente propiedades emergentes como fiabilidad, velocidad de respuesta y capacidad de almacenamiento.", "Los servicios que el sistema debe proveer, cómo reacciona a entradas particulares, cómo se comporta en situaciones específicas e incluso lo que NO debería hacer.", "El cronograma de pagos y el costo mensual de licencias.", "La topología física de los routers de red.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 6 del PDF 09: Fiabilidad, velocidad y almacenamiento son Requerimientos No Funcionales. Ojo al detalle literal de cátedra: los Funcionales también pueden explicar 'lo que NO debería hacer el sistema'."}, {"id": "u5a-q4", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "prescriptiva", "text": "El proceso de descubrir, analizar, documentar y verificar los servicios y restricciones de un sistema se denomina:", "options": ["Diseño Procedimental.", "Administración de la Configuración.", "Ingeniería de Requerimientos (IR).", "Prueba de Caja Negra.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Definición textual de la pág. 7 del PDF 09: 'El proceso de descubrir, analizar, documentar y verificar los servicios y restricciones se llama Ingeniería de Requerimientos (IR)'."}, {"id": "u5a-q5", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "prescriptiva", "text": "Dentro de los 'Principios de Análisis', ¿cuál es la dirección correcta en la que debe avanzar el proceso de análisis?", "options": ["Desde los detalles tecnológicos de implementación hacia la información esencial del negocio.", "Desde la codificación de módulos hacia el reconocimiento del problema.", "Desde la información esencial hacia el detalle de la implementación, subdividiendo los modelos de manera progresiva o jerárquica.", "En un único modelo plano sin particiones para evitar perder visión global.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Pág. 9 del PDF 09: Los 4 principios son: 1) comprender el ámbito de información, 2) desarrollar modelos de información, función y comportamiento, 3) subdividir progresiva/jerárquicamente, 4) ir de la información esencial hacia el detalle de implementación."}, {"id": "u5a-q6", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "prescriptiva", "text": "Según el PDF de la cátedra, una entrevista con formato 'EMBUDO' es aquella que...", "options": ["Inicia directamente enfocada en el objetivo y luego amplía el diálogo a más temas.", "Inicia directamente enfocada en el objetivo, amplía a otros temas y regresa al tema objetivo al terminar.", "Inicia un diálogo con temario amplio, para abordar el tema objetivo hacia el final de la entrevista.", "Utiliza exclusivamente preguntas cerradas enviadas por correo anónimo.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Pág. 12 del PDF 09: Iniciar en el objetivo y abrir a más temas es PIRAMIDAL; iniciar en el objetivo, ampliar y regresar al objetivo es ROMBO; iniciar con temario amplio y cerrar en el objetivo al final es EMBUDO."}, {"id": "u5a-q7", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "prescriptiva", "text": "En una entrevista de relevamiento, la diferencia entre 'Entrevista Estructurada' y 'No Estructurada' radica en que:", "options": ["La No Estructurada se improvisa sin tener claro el objetivo del diálogo.", "La Estructurada establece una lista de temas que guían el diálogo de principio a fin; la No Estructurada tiene claro el objetivo pero sin temario organizado previo.", "La Estructurada sólo admite preguntas cerradas de Sí/No.", "Las entrevistas pueden improvisarse si el analista tiene experiencia.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 11 del PDF 09: ¡Cuidado con la trampa! Incluso la entrevista No Estructurada tiene claro el objetivo, y la cátedra subraya explícitamente: 'Las Entrevistas deben planificarse, NO se pueden improvisar'."}, {"id": "u5a-q8", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "prescriptiva", "text": "Respecto a la técnica de relevamiento mediante 'Cuestionarios', es correcto afirmar que:", "options": ["Es ideal cuando las personas a interrogar están concentradas en una sola oficina pequeña.", "Permite observar claramente las expresiones faciales y reacciones emocionales de los encuestados.", "Es una consulta masiva, generalmente escrita, puede ser anónima, sirve para personas dispersas en distintas áreas, pero NO permite observar expresiones o reacciones.", "Reemplaza por completo la necesidad de verificar documentos o hacer seguimiento.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Págs. 15-16 del PDF 09: Su limitación clave destacada en rojo/recuadro en la diapositiva es que 'No permite observar expresiones o reacciones de los entrevistados'."}, {"id": "u5a-q9", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "prescriptiva", "text": "Al aplicar la técnica de 'Revisión de Registros' (análisis documental) en una organización, el analista debe preferentemente...", "options": ["Solicitar únicamente formularios en blanco sin usar para no violar datos históricos.", "Obtener copias de documentos relevantes que estén usados, para conocer estructuras de datos reales, registros informales e insuficiencia de datos.", "Ignorar todos los informes cotidianos y guiarse sólo por lo que dijeron los jefes en la entrevista.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "¡Pregunta textual de la pág. 18 del PDF 09! 'Es conveniente obtener copias de documentos relevantes que estén usadas y no formularios en blanco', porque revelan registros informales y cómo se usan en la realidad."}, {"id": "u5a-q10", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "prescriptiva", "text": "La técnica de 'Observación' en la etapa de requerimientos tiene como propósito principal:", "options": ["Realizar una consulta escrita anónima a cientos de empleados dispersos.", "Verificar en el lugar donde suceden los hechos cómo realmente se comportan el sistema, las personas y el ambiente físico, confirmando o corrigiendo lo aprendido con otras técnicas.", "Inspeccionar el código fuente en búsqueda de bucles infinitos.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 17 del PDF 09: La observación ocurre en el lugar de los hechos e incluye tanto a las personas como al ambiente físico, sirviendo para confirmar o corregir entrevistas/cuestionarios."}, {"id": "u5a-q11", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "prescriptiva", "text": "En el documento de Especificación de Requisitos de Software (SRS), la sección de 'Criterios de Validación' incluye:", "options": ["El presupuesto salarial de los programadores y el diagrama de Gantt.", "El código fuente compilado de los módulos críticos.", "Límites de rendimiento, Clases de Pruebas y Respuestas esperadas del software.", "Únicamente la bibliografía y el apéndice.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Pág. 21 del PDF 09: Criterios de Validación agrupa: Límites de rendimiento, Clases de Pruebas, Respuestas esperadas del software y Consideraciones especiales."}, {"id": "u5a-q12", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "agil", "text": "Desde la perspectiva Ágil, los requerimientos se gestionan mediante Historias de Usuario cuyas '3 C' (Ron Jeffries) significan:", "options": ["Código, Compilación y Calidad.", "Costo, Cronograma y Contrato.", "Card (Tarjeta breve), Conversation (Conversación para detallar) y Confirmation (Criterios de aceptación verificables).", "Cliente, Consultor y Coordinador.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "En ágil no se congela una SRS exhaustiva al día 1: la Historia de Usuario es un recordatorio para conversar (Card + Conversation) y se valida con Criterios de Aceptación (Confirmation)."}, {"id": "u5a-q13", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "ambas", "text": "En el contexto general del Proceso de Desarrollo (pág. 8, Análisis), las cinco áreas de esfuerzo del Análisis de Requerimientos son:", "options": ["Inicio, Elaboración, Construcción, Transición y Mantenimiento.", "Reconocimiento del problema, Evaluación y síntesis, Modelización, Especificación y Revisión.", "Unidad, Integración, Validación, Sistema y Humo.", "Entrada, Salida, Consulta, Archivo Interno y Archivo Externo.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 8 del PDF 09: Las 5 áreas de esfuerzo exactas son: Reconocimiento del problema -> Evaluación y síntesis -> Modelización -> Especificación -> Revisión."}, {"id": "u5d-q1", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "prescriptiva", "text": "El Diseño de Software se define formalmente en la cátedra como:", "options": ["El estudio de un sistema actual para conocer dónde efectuar mejoras de negocio.", "El proceso de escritura del código fuente y su compilación a código binario.", "El proceso de aplicar distintas técnicas y principios con el propósito de definir un dispositivo, proceso o sistema con suficiente detalle como para permitir su realización física.", "La ejecución destructiva de un programa para demostrar la presencia de defectos.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Definición textual de la pág. 3 del PDF 10 (Taylor/Pressman). Además, es la primera actividad técnica de construcción (diseño -> codificación -> prueba)."}, {"id": "u5d-q2", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "prescriptiva", "text": "En el Modelo 4+1 Vistas de Philippe Kruchten (estándar IEEE 1471 / ISO 42010), ¿qué vista equivale al 'Plano Eléctrico' de una casa y qué muestra?", "options": ["La Vista Lógica: muestra las entidades del dominio y distribución de funciones para el cliente.", "La Vista de Desarrollo: muestra la organización interna del repositorio, paquetes y librerías para programadores.", "La Vista Física (Despliegue): muestra los servidores, red y contenedores Cloud para DevOps.", "La Vista de Proceso: muestra el comportamiento dinámico, concurrencia, hilos y flujo en tiempo de ejecución (Diagramas de Secuencia, Actividad y Estado).", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [3], "trapNote": "Metáfora de los planos (págs. 10-14 del PDF 10): Planta de la casa = Vista Lógica; Plano Eléctrico = Vista de Proceso; Tuberías/Fontanería = Vista Física; Estructura/Vigas = Vista de Desarrollo."}, {"id": "u5d-q3", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "prescriptiva", "text": "¿Cuál es la función de la vista '+1' (Escenarios / Casos de Uso) en el Modelo de Kruchten?", "options": ["Reemplazar el diagrama de despliegue cuando el sistema es monolítico.", "Se ubica en el centro porque une y valida que las otras cuatro vistas funcionen de forma coherente y armoniosa para cumplir una necesidad del usuario.", "Documentar únicamente las licencias de software y costos del servidor.", "Representar las tablas físicas de la base de datos relacional.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Págs. 8-9 del PDF 10: El '+1' central (Scenarios / Casos de Uso) une y valida a las cuatro vistas principales (Lógica, Proceso, Desarrollo y Física)."}, {"id": "u5d-q4", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "prescriptiva", "text": "Relacione correctamente la Vista de Kruchten con su Interesado (Stakeholder) y Diagrama UML típico:", "options": ["Vista Física -> Cliente Final -> Diagrama de Casos de Uso.", "Vista de Desarrollo -> Programadores / Líder Técnico -> Diagrama de Componentes / Paquetes.", "Vista Lógica -> DevOps / SysAdmin -> Diagrama de Despliegue.", "Vista Física (Despliegue) -> DevOps / SysAdmin -> Diagrama de Despliegue.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1, 3], "trapNote": "¡Doble opción verdadera según la Tabla Comparativa de pág. 14! Desarrollo -> Programadores (Componentes/Paquetes) y Física -> DevOps/SysAdmin (Despliegue). Lógica es para Cliente (Clases/Uso)."}, {"id": "u5d-q5", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "prescriptiva", "text": "Respecto a los principios de 'Abstracción' y 'Refinamiento' en Diseño:", "options": ["Son conceptos opuestos e incompatibles entre sí.", "En un nivel alto de abstracción se detallan todas las variables locales y tipos de datos del lenguaje.", "El refinamiento paso a paso (Niklaus Wirth) es una estrategia de diseño ascendente (bottom-up).", "El refinamiento paso a paso es una estrategia descendente que proporciona más detalle en cada paso sucesivo, siendo complementario a la abstracción.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [3], "trapNote": "Págs. 16-17 del PDF 10: Alto nivel de abstracción = comportamiento global sin detalles de implementación. Refinamiento (Wirth) = estrategia DESCENDENTE (top-down), complementaria a la abstracción."}, {"id": "u5d-q6", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "prescriptiva", "text": "Al analizar la curva de Modularidad y Esfuerzo, dado que C(p1 + p2) > C(p1) + C(p2), ¿por qué NO conviene dividir el software en una cantidad infinita de módulos diminutos?", "options": ["Porque el costo individual de cada módulo crece exponencialmente al hacerlo más pequeño.", "Porque a medida que el número de módulos crece demasiado, los costos de integración aumentan superando el ahorro por módulo.", "Porque los lenguajes orientados a objetos prohíben más de 20 módulos.", "Porque el software monolítico siempre es más fácil de mantener y probar.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Gráfico de la pág. 19 del PDF 10: El costo por módulo baja al dividir, pero el Costo de Integración sube; por eso la curva de Costos Totales tiene forma de 'U' con una zona de número óptimo de módulos (M)."}, {"id": "u5d-q7", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "prescriptiva", "text": "En la 'Jerarquía de Control' de la arquitectura de un programa:", "options": ["Representa en detalle la secuencia procedimental de ejecución y los bucles internos.", "El 'Grado de Entrada' mide cuántos módulos son controlados directamente por un módulo dado.", "El 'Grado de Salida' indica cuántos módulos superiores controlan al módulo en cuestión.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [4], "trapNote": "¡Triple trampa -> 'Ninguna de las anteriores'! Pág. 21 del PDF 10: 1) La jerarquía de control NO representa aspectos procedimentales. 2) Grado de SALIDA = cuántos módulos controla él directamente. 3) Grado de ENTRADA = cuántos módulos lo controlan a él."}, {"id": "u5d-q8", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "prescriptiva", "text": "En la 'Partición Vertical' (descomposición en factores) de la estructura arquitectónica:", "options": ["Se definen tres ramas laterales al mismo nivel para entrada, procesamiento y salida.", "Los módulos superiores realizan el trabajo pesado de entrada/salida y los inferiores toman las decisiones.", "Los módulos superiores realizan funciones de control (toma de decisiones) y los inferiores realizan el trabajo; un cambio arriba tiene mayor probabilidad de propagar errores.", "Un cambio en un módulo trabajador inferior propaga más errores que un cambio en la cúpula de control.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Págs. 23-26 del PDF 10: Definir tres ramas laterales (entrada, proceso, salida) es Partición Horizontal. En la Partición Vertical, arriba van los Módulos de Toma de Decisiones (mayor probabilidad de propagar error) y abajo los Módulos de Trabajo."}, {"id": "u5d-q9", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "prescriptiva", "text": "El principio de 'Ocultamiento de la Información' establece que...", "options": ["El código fuente debe encriptarse para que otros desarrolladores del equipo no puedan leerlo.", "Todos los módulos deben compartir variables globales para comunicarse más rápido.", "Los módulos deben diseñarse de modo que su información interna (procedimiento y datos) sea inaccesible a otros módulos que no la necesiten.", "Las interfaces públicas deben exponer todas las estructuras de datos privadas.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Pág. 29 del PDF 10: Los módulos ocultan sus decisiones internas de datos y procedimientos, comunicándose entre sí sólo con la información mínima y necesaria."}, {"id": "u5d-q10", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "ambas", "text": "Para lograr un 'Diseño Modular Efectivo' con alta Independencia Funcional, se busca siempre:", "options": ["Baja Cohesión y Alto Acoplamiento.", "Alta Cohesión y Alto Acoplamiento.", "Baja Cohesión y Bajo Acoplamiento.", "Alta Cohesión (módulos de un solo propósito) y Bajo Acoplamiento (mínima interdependencia entre módulos).", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [3], "trapNote": "Regla de oro del Diseño Modular (págs. 30-32 del PDF 10): Cohesión ALTA (fuerza funcional interna de un solo propósito) y Acoplamiento BAJO (poca dependencia entre módulos)."}, {"id": "u5d-q11", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "prescriptiva", "text": "En la escala de 'Cohesión' de la cátedra, ¿cuál es el nivel MÁS BAJO (peor, disperso) y cuál el MÁS ALTO (mejor, de un solo propósito)?", "options": ["Más bajo: Lógica | Más alto: Secuencial.", "Más bajo: Coincidente | Más alto: Funcional.", "Más bajo: Temporal | Más alto: De comunicación.", "Más bajo: De contenido | Más alto: De datos.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 31 del PDF 10: Escala de Cohesión de Baja a Alta = Coincidente -> Lógica -> Temporal -> Procedimental -> De comunicación -> Secuencial -> Funcional. (Contenido y Datos son niveles de Acoplamiento, no de Cohesión)."}, {"id": "u5d-q12", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "prescriptiva", "text": "En la escala de 'Acoplamiento' (interdependencia entre módulos), el acoplamiento MÁS ALTO e indeseable es:", "options": ["Acoplamiento de datos.", "Acoplamiento de marca (stamp).", "Sin acoplamiento directo.", "Acoplamiento de contenido.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [3], "trapNote": "Pág. 32 del PDF 10: Escala de Acoplamiento de Bajo (🙂) a Alto (☹️) = Sin acoplamiento directo -> De datos -> De marca -> De control -> Externo -> Normal (común) -> De contenido (el peor: un módulo se mete en el interior de otro)."}, {"id": "u5d-q13", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "prescriptiva", "text": "Los cuatro niveles técnicos que conforman la pirámide de 'El Modelo de Diseño' (de su base hacia la cúspide) son:", "options": ["Requisitos, Análisis, Codificación y Prueba.", "Diseño de Datos, Diseño Arquitectónico, Diseño de Interfaz y Diseño Procedimental.", "Vista Lógica, Vista Física, Vista de Proceso y Vista de Desarrollo.", "Unidad, Integración, Validación y Sistema.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Págs. 4-5 del PDF 10: La pirámide del Modelo de Diseño tiene en su base Diseño de Datos, luego Diseño Arquitectónico, Diseño de Interfaz y arriba Diseño Procedimental."}, {"id": "u5d-q14", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "agil", "text": "En el desarrollo moderno guiado por especificaciones (SDD / diseño ágil en capas), la 'Segregación de Responsabilidades' aplica directamente los principios de:", "options": ["Software monolítico y acoplamiento de contenido.", "Modularidad, ocultamiento de información, alta cohesión por capa y bajo acoplamiento mediante interfaces claras.", "Eliminar toda arquitectura para codificar directamente por ensayo y error (Vibe Coding).", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Conecta Diseño (Unidad V) con la práctica ágil/SDD de la cátedra: separar UI, Transporte, Dominio y Persistencia materializa alta cohesión y bajo acoplamiento."}, {"id": "u6p-q1", "unit": "U6P", "unitLabel": "Unidad VI · Codificación y CASE", "perspective": "prescriptiva", "text": "Según el apunte de Programación del Software, un 'Lenguaje de Programación' se define como:", "options": ["El proceso de compilar un archivo ejecutable en código máquina.", "Un conjunto de palabras ordenadas (sistema) con símbolos y reglas de sintaxis y semántica cuyo objetivo es expresar procesos ejecutables por computadoras.", "Una herramienta CASE destinada únicamente a dibujar diagramas UML.", "El equipo físico donde se despliega el sistema en producción.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 4 del PDF 11: Lenguaje de Programación = conjunto de palabras ordenadas + símbolos + reglas de Sintaxis y Semántica para crear programas, expresar algoritmos y comunicar humanos con máquinas."}, {"id": "u6p-q2", "unit": "U6P", "unitLabel": "Unidad VI · Codificación y CASE", "perspective": "prescriptiva", "text": "La 'Programación' se define formalmente en la cátedra como:", "options": ["La ordenación sistemática de tareas en un diagrama de PERT.", "El proceso de escritura del código fuente y compilación o interpretación de un programa informático, para generar el código ejecutable (binario).", "La ejecución de casos de prueba de caja blanca.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 6 del PDF 11: Código fuente -> compilar / interpretar -> Código binario / ejecutable."}, {"id": "u6p-q3", "unit": "U6P", "unitLabel": "Unidad VI · Codificación y CASE", "perspective": "prescriptiva", "text": "En los conceptos a considerar durante la construcción de software, el 'Desarrollo huésped-objetivo' significa que:", "options": ["El cliente se hospeda en las oficinas de la consultora durante todo el desarrollo.", "Se debe reutilizar la mayor cantidad posible de librerías existentes.", "Deben existir diferentes equipos (entornos/máquinas) entre el que sirve para desarrollar (host) y el que sirve para ejecutar el sistema (target).", "Se administran las versiones de los componentes en un repositorio Git.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "¡Ojo con el juego de palabras literal de 'hospedarse en oficinas'! Pág. 7 del PDF 11: Desarrollo huésped-objetivo significa contar con diferentes equipos/entornos entre el que sirve para desarrollar y el que sirve para ejecutar el sistema."}, {"id": "u6p-q4", "unit": "U6P", "unitLabel": "Unidad VI · Codificación y CASE", "perspective": "prescriptiva", "text": "Las herramientas CASE (Computer-Aided Software Engineering) son programas que...", "options": ["Sirven únicamente para generar código binario sin intervención humana.", "Apoyan las actividades del proceso de ingeniería del software: edición de diseños/programas, compilación, depuración y gestión/consulta de información del sistema.", "Reemplazan los métodos y técnicas de la ingeniería de software.", "Sólo pueden utilizarse en la etapa de pruebas unitarias.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 8 del PDF 11: Las herramientas CASE apoyan las actividades del proceso en distintas fases (Upper, Middle y Lower CASE)."}, {"id": "u6p-q5", "unit": "U6P", "unitLabel": "Unidad VI · Codificación y CASE", "perspective": "prescriptiva", "text": "En la clasificación de herramientas CASE del gráfico de la cátedra, las herramientas de Planificación, Prototipado y Soporte de Métodos de especificación/diseño inicial se ubican principalmente en:", "options": ["Lower CASE exclusivamente.", "Upper / Middle CASE (fases tempranas de Especificación y Diseño), mientras que Testing y Debugging se concentran en fases de Implementación y Verificación.", "Compiladores de código máquina de bajo nivel.", "Ninguna categoría CASE cubre la planificación.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Gráfico de la pág. 9 del PDF 11: Muestra los niveles Upper, Middle y Lower CASE cruzados contra Specification, Design, Implementation y Verification & Validation."}, {"id": "u6p-q6", "unit": "U6P", "unitLabel": "Unidad VI · Codificación y CASE", "perspective": "ambas", "text": "La 'Administración de la Configuración' durante la codificación establece que:", "options": ["El usuario final debe configurar manualmente los parámetros del servidor.", "Se deben administrar con cuidado las diferentes versiones de los distintos componentes del software.", "No se debe reutilizar código previo para evitar conflictos de versiones.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Definición exacta de la pág. 7 del PDF 11."}, {"id": "u6t-q1", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "prescriptiva", "text": "Según los fundamentos de la Prueba del Software, ¿por qué se afirma que la prueba es un 'proceso destructivo'?", "options": ["Porque borra la base de datos de producción en cada ejecución.", "Porque a diferencia de los demás procesos constructivos, intenta encontrar las fallas en el desarrollo; por ello se recomienda un equipo de prueba independiente al de desarrollo.", "Porque destruye los documentos de requerimientos obsoletos.", "Porque reduce el rendimiento del procesador al 30%.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 3 del PDF 12: Dedica ~30% de los recursos totales, es psicológicamente destructiva porque busca hallar errores, y requiere equipo diferente al desarrollador para asegurar objetividad."}, {"id": "u6t-q2", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "ambas", "text": "Según los Principios de la Prueba (Myers / Pressman), ¿cuándo se considera que una Prueba es 'EXITOSA'?", "options": ["Cuando se ejecuta de principio a fin sin mostrar ningún mensaje de error.", "Cuando demuestra con certeza absoluta que no existen defectos en el software.", "Cuando descubre un error no detectado aún.", "Cuando el cliente firma la aceptación sin probar las pantallas secundarias.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "¡LA TRAMPA Nº 1 DE PRUEBAS! Pág. 5 del PDF 12: 'Una prueba es exitosa si descubre un error no detectado aún' y 'Una Prueba no puede asegurar la ausencia de defectos; sólo puede demostrar que existen defectos'."}, {"id": "u6t-q3", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "prescriptiva", "text": "Un 'Caso de Prueba' se define en los apuntes como:", "options": ["El informe final con el índice estadístico de errores corregidos.", "El conjunto de valores de variables y condiciones lógicas (entradas, condiciones de ejecución y resultados esperados) que fuerzan la ejecución del software de una manera determinada.", "La actividad de corregir el código fuente defectuoso en el IDE.", "Un módulo auxiliar ficticio creado para simular un submódulo faltante.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 4 del PDF 12. Ojo: corregir el código defectuoso es 'Depuración' (debugging), no Caso de Prueba."}, {"id": "u6t-q4", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "prescriptiva", "text": "En el esquema de 'Flujo de Información en la Prueba' (pág. 6), ¿qué elementos ingresan inicialmente al proceso de Prueba y qué ocurre cuando se detectan errores?", "options": ["Ingresan el Código Binario y el Manual de Usuario; si hay errores vuelve directamente a Análisis.", "Ingresan el Software (desde Codificación) y el Plan de Pruebas; el Software con errores pasa a Depuración, que genera Software Corregido de regreso a Prueba.", "Prueba y Depuración son exactamente la misma actividad ejecutada en un solo paso.", "El Software con errores pasa directo a Instalación con advertencias.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Esquema de pág. 6 y texto de pág. 9 del PDF 12: Entran Software + Plan de Pruebas. Salen: Software Validado (-> Instalación), Índice de errores, y Software con errores (-> Depuración -> Software Corregido -> Prueba). Prueba y depuración son actividades DIFERENTES."}, {"id": "u6t-q5", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "ambas", "text": "Distinga correctamente entre 'Verificación' y 'Validación' según las preguntas clásicas de Boehm en la cátedra:", "options": ["Verificación: ¿Estamos construyendo el producto correcto? | Validación: ¿Estamos construyendo el producto correctamente?", "Verificación: ¿Estamos construyendo el producto correctamente? | Validación: ¿Estamos construyendo el producto correcto?", "Ambas preguntas significan exactamente lo mismo y se responden sólo con pruebas unitarias.", "Verificación la hace únicamente el cliente final y Validación únicamente el compilador.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "¡Inversión clásica de examen! Pág. 9 del PDF 12: Verificación = ¿construyendo el producto CORRECTAMENTE? (conformidad con especificación técnica). Validación = ¿construyendo el producto CORRECTO? (lo que el cliente realmente necesita)."}, {"id": "u6t-q6", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "prescriptiva", "text": "Las 'Pruebas de Caja Negra' se caracterizan porque...", "options": ["Se aplican sobre los detalles procedimentales y se centran en la Estructura de Control ('prueba a pequeña escala').", "Se aplican típicamente sobre la interfaz del software, permiten validar requisitos funcionales, se centran en el ámbito de información y se denominan 'prueba a gran escala'.", "Exigen que el evaluador lea línea por línea todas las sentencias condicionales del código fuente.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Pág. 8 del PDF 12: Caja Negra = sobre interfaz, valida requisitos funcionales, ámbito de información, 'prueba a gran escala' (conociendo la función). Caja Blanca = detalles procedimentales, estructura de control, 'prueba a pequeña escala' (conociendo el funcionamiento)."}, {"id": "u6t-q7", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "prescriptiva", "text": "En la 'Estrategia de Prueba en Espiral' (págs. 10-11), el orden progresivo de las pruebas desde el centro hacia afuera es:", "options": ["Prueba del Sistema -> Prueba de Validación -> Prueba de Integración -> Prueba de Unidad.", "Prueba de Unidad -> Prueba de Integración -> Prueba de Validación -> Prueba del Sistema.", "Prueba de Humo -> Prueba Beta -> Prueba Alfa -> Prueba de Unidad.", "Análisis -> Diseño -> Codificación -> Mantenimiento.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "La estrategia comienza 'en el nivel de un módulo y luego pasa a la integración': Unidad (Codificación) -> Integración (Diseño) -> Validación (Requisitos) -> Sistema (Ingeniería del Sistema)."}, {"id": "u6t-q8", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "prescriptiva", "text": "Según lo visto en clase teórica y en la Estrategia de Pruebas, la 'Prueba de Integración' se caracteriza por:", "options": ["Ser ejecutada por usuarios finales externos sin presencia del desarrollador (Prueba Beta).", "Evaluar componentes aislados de forma individual sin comunicación con otros módulos.", "Verificar la comunicación e interacción entre módulos integrados, asociada a la arquitectura y modelo de datos.", "Comprobar únicamente la estética de colores de la pantalla de login.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Apunte de clase del 23/10 y PDF 12: Unidad verifica componentes aislados; Integración verifica cómo interactúan y se comunican los módulos acoplados según el Diseño/Arquitectura."}, {"id": "u6t-q9", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "prescriptiva", "text": "En el 'Modelo en V' (pág. 12 del PDF de Prueba), ¿cómo se emparejan horizontalmente las fases de Desarrollo con las de Pruebas?", "options": ["Captura de Requisitos <-> Componentes | Desarrollo del Sistema <-> Aceptación.", "Captura de Requisitos <-> Aceptación | Diseño del Sistema <-> Integración y Sistema | Desarrollo del Sistema <-> Componentes.", "Diseño del Sistema <-> Humo | Captura de Requisitos <-> Unidad.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Gráfico exacto de la pág. 12 del PDF 12: Arriba Captura de Requisitos valida con Aceptación; al medio Diseño del Sistema con Integración y Sistema; abajo Desarrollo del Sistema con Componentes."}, {"id": "u6t-q10", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "ambas", "text": "¿En qué consiste la 'Prueba de Regresión' (pág. 13)?", "options": ["En volver a una versión vieja del código borrando las nuevas funcionalidades.", "En re-ejecutar pruebas previas luego de un cambio o corrección para asegurar que las modificaciones no introdujeron efectos secundarios ni rompieron lo que ya funcionaba.", "En desconectar el cable de red para medir cuánto tarda en reconectar.", "En calcular estadísticamente la regresión lineal de COCOMO.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "¡Ojo con los cebos de palabras ('regresión lineal' o 'volver a una versión vieja')! En pruebas, Regresión significa re-ejecutar pruebas tras cambios para asegurar que no se introdujeron fallos en funciones que antes andaban bien."}, {"id": "u6t-q11", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "ambas", "text": "La 'Prueba de Humo' (Smoke Testing — límite del temario en pág. 13) tiene como propósito fundamental:", "options": ["Someter el servidor al triple de carga máxima de usuarios durante 48 horas continuas.", "Realizar una verificación básica, rápida e inicial sobre las funciones vitales de una nueva versión/build para detectar fallos críticos inmediatos antes de pruebas profundas.", "Probar exhaustivamente todos los caminos lógicos posibles del código fuente.", "Sustituir definitivamente las pruebas de unidad, integración y validación.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Clase del 23/10 y pág. 13: Prueba de Humo verifica rápido las funciones vitales de una build para detectar fallos críticos inmediatos antes de pruebas profundas. Someter al triple de carga por 48 hs sería prueba de sobrecarga/estrés."}, {"id": "u6t-q12", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "ambas", "text": "Al contrastar el enfoque de Pruebas en metodologías Prescriptivas vs. Ágiles (según lo desarrollado en cátedra):", "options": ["En metodologías ágiles no se realizan pruebas porque priorizan software funcionando sobre documentación.", "En metodologías prescriptivas (cascada) la validación fuerte ocurre al final del ciclo, mientras que en ágiles la validación y pruebas (regresión, humo) son continuas en cada incremento/Sprint.", "Las pruebas Beta sólo existen en programación extrema y están prohibidas en procesos prescriptivos.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "Destacado expresamente en tu apunte de clase CT-23/10/26: Ágiles = validación continua en cada iteración; Prescriptivas = validación concentrada hacia el final."}, {"id": "u6t-q13", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "prescriptiva", "text": "Dentro de los 'Tipos Generales de Prueba' listados en la pág. 13 del PDF, la diferencia entre prueba de 'Volumen' y de 'Sobrecarga' (estrés) es que:", "options": ["Son sinónimos exactos para medir la facilidad de uso de la interfaz.", "Volumen evalúa grandes cantidades de datos procesados/almacenados, mientras Sobrecarga somete al sistema a demandas extremas (pico de transacciones/recursos) por encima de sus límites normales.", "Ambas son pruebas exclusivas de Caja Blanca sobre un módulo aislado sin ejecutar el sistema.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [1], "trapNote": "En la pág. 13 aparecen separadas: Rendimiento, Volumen (cantidad masiva de datos) y Sobrecarga (exceder umbrales operativos en el tiempo)."}, {"id": "u6t-q14", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "prescriptiva", "text": "Las características generales de las 'Estrategias de Prueba' establecen todas las siguientes EXCEPTO una (marque la INCORRECTA):", "options": ["Comienza en el nivel de un módulo y luego pasa a la integración.", "Diferentes técnicas de prueba son apropiadas en diferentes momentos.", "La prueba debería ser desarrollada siempre por el mismo programador que escribió el módulo para ahorrar costos de sistema.", "Prueba y depuración son actividades diferentes, aunque la depuración debe tener cabida en la estrategia.", "Ninguna de las anteriores."], "correctIndexes": [2], "trapNote": "Pág. 9 del PDF 12: Dice textualmente 'La prueba debería ser desarrollada por un grupo independiente' (a excepción de la unitaria inicial del programador, la estrategia general exige independencia para evitar sesgo constructivo)."}, {"id": "u3-q16", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "prescriptiva", "text": "En la Estimación por Puntos de Función, cada una de las 14 características generales del sistema se pondera...", "options": ["En una escala de 1 a 5, donde 1 significa 'Sin influencia' y 5 significa 'Esencial'.", "En una escala porcentual de 0% a 100% según las líneas de código.", "Multiplicando los KDSI por el factor orgánico 2,4.", "Únicamente después de finalizar las pruebas de validación.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [5], "trapNote": "¡Trampa quirúrgica de 1 número -> 'Ninguna de las anteriores'! La escala real de la pág. 26 va de 0 a 5 (NO de 1 a 5): 0 = Sin influencia, 1 = Incidental, 2 = Moderado, 3 = Medio, 4 = Significativo, 5 = Esencial."}, {"id": "u3-q17", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "perspective": "prescriptiva", "text": "El Modelo Intermedio de COCOMO evalúa 15 variables de predicción ('conductores de costo') agrupadas en:", "options": ["Atributos del Producto (fiabilidad, tamaño de BD, complejidad).", "Atributos del Hardware (restricciones de tiempo de ejecución, memoria, volatilidad).", "Atributos del Personal (capacidad del analista/ingeniero, experiencia en aplicación, lenguaje y máquina virtual).", "Atributos del Proyecto (uso de herramientas de software, métodos de IS y planificación temporal requerida).", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [4], "trapNote": "¡Aquí SÍ es 'Todas las anteriores'! Pág. 32 del PDF 06: las 4 familias exactas de los 15 conductores de costo de COCOMO Intermedio son Producto, Hardware, Personal y Proyecto."}, {"id": "u4-q11", "unit": "U4", "unitLabel": "Unidad IV · Planificación y Control", "perspective": "prescriptiva", "text": "La Planificación del Proyecto de Software se define en los apuntes como...", "options": ["La recolección de métricas durante el mantenimiento correctivo del sistema.", "La ordenación aleatoria de programadores sin considerar interdependencias entre tareas.", "Un esfuerzo administrativo que consume habitualmente entre el 25% y el 35% del presupuesto total del proyecto.", "La ejecución de casos de prueba sobre el camino crítico.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [5], "trapNote": "¡Es 'Ninguna de las anteriores'! La Planificación es la ordenación SISTEMÁTICA de las tareas para lograr un objetivo (qué hacer y cómo llevarlo a cabo), y su esfuerzo se mantiene BAJO el 3% del total (pág. 11)."}, {"id": "u5a-q14", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "prescriptiva", "text": "Según los Principios de Análisis de Requerimientos (pág. 9), el analista debe:", "options": ["Representar y comprender el ámbito de información del problema.", "Desarrollar modelos que representen la información, la función y el comportamiento del sistema.", "Subdividir los modelos y el problema de forma que se descubran los detalles de manera progresiva o jerárquica.", "Avanzar desde la información esencial hacia el detalle de la implementación.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [4], "trapNote": "¡Es 'Todas las anteriores'! Son exactamente los 4 Principios de Análisis listados en la pág. 9 del PDF 09."}, {"id": "u5a-q15", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "perspective": "prescriptiva", "text": "Una entrevista de relevamiento en formato 'ROMBO' según el gráfico de la cátedra consiste en:", "options": ["Iniciar con preguntas amplias generales y cerrar en el objetivo específico al final.", "Iniciar con preguntas cerradas sobre el objetivo y terminar con preguntas abiertas sin volver al objetivo.", "Interrogar simultáneamente a cuatro gerentes en una mesa cuadrada.", "Enviar encuestas anónimas a empleados dispersos geográficamente.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [5], "trapNote": "¡Es 'Ninguna de las anteriores'! Según la pág. 12 del PDF 09, el formato ROMBO consiste en 'iniciar directamente enfocados en el objetivo, luego ampliar a otros temas, pero regresando al tema objetivo antes de terminar'."}, {"id": "u5d-q15", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "perspective": "prescriptiva", "text": "Al especificar la 'Arquitectura del Software' (pág. 20, Diseño), el documento indica que se deben especificar:", "options": ["Propiedades estructurales (componentes del sistema y sus interacciones).", "Propiedades extra-funcionales (cómo lograr rendimiento, capacidad, fiabilidad, seguridad y adaptabilidad).", "Familias de sistemas relacionados (reutilización de esquemas arquitectónicos previos).", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [3], "trapNote": "¡Es 'Todas las anteriores'! Pág. 20 del PDF 10: Propiedades estructurales + Propiedades extra-funcionales + Familias de sistemas relacionados."}, {"id": "u6t-q15", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "prescriptiva", "text": "En los conceptos de Calidad de Software, la 'Validación' responde específicamente a la pregunta:", "options": ["¿Estamos construyendo el producto correctamente de acuerdo al diseño procedimental?", "¿Cuántas líneas de código por mes produce cada programador?", "¿Se compilaron todos los archivos sin errores sintácticos?", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [4], "trapNote": "¡Trampa mortal con 'Ninguna de las anteriores'! '¿Estamos construyendo el producto correctamente?' es VERIFICACIÓN. La VALIDACIÓN pregunta: '¿Estamos construyendo el producto CORRECTO?' (pág. 9, PDF 12)."}, {"id": "u6t-q16", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "perspective": "ambas", "text": "Ejecutar una suite completa de pruebas automatizadas y no encontrar ningún fallo permite asegurar que...", "options": ["El software quedó 100% libre de defectos y no requiere mantenimiento futuro.", "La prueba fue sumamente exitosa según la definición de Myers.", "Ya no es necesario realizar pruebas de validación con el cliente.", "Todas las anteriores.", "Ninguna de las anteriores."], "correctIndexes": [4], "trapNote": "¡Doble trampa -> 'Ninguna de las anteriores'! 1) Una prueba NUNCA puede asegurar la ausencia de defectos (sólo demuestra que existen defectos). 2) Una prueba sólo es 'exitosa' si DESCUBRE un error no detectado aún (pág. 5, PDF 12)."}], "diagrams": [{"id": "diag-u3-gestion", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "title": "Complete el esquema de vinculación entre las Actividades de Gestión y Métricas (PDF Métricas, pág. 14):", "options": ["Estimación", "Planificación", "Seguimiento", "Grandes ajustes", "Pequeños ajustes", "Antecedentes", "Registro de la realidad", "Codificación", "Depuración"], "slots": [{"label": "Casilla [1] — Primera burbuja superior izquierda", "correct": "Estimación"}, {"label": "Casilla [2] — Burbuja central", "correct": "Planificación"}, {"label": "Casilla [3] — Burbuja inferior derecha (antes del cilindro)", "correct": "Seguimiento"}, {"label": "Casilla [4] — Flecha corta de retorno hacia [2]", "correct": "Pequeños ajustes"}, {"label": "Casilla [5] — Flecha larga superior desde [1] <- Cilindro Métricas", "correct": "Antecedentes"}, {"label": "Casilla [6] — Flecha desde [3] hacia el Cilindro Métricas", "correct": "Registro de la realidad"}], "svg": "\n        <svg viewBox=\"0 0 680 340\" class=\"diag-svg\">\n          <defs>\n            <marker id=\"arrB\" markerWidth=\"8\" markerHeight=\"8\" refX=\"7\" refY=\"4\" orient=\"auto\"><path d=\"M0,0 L8,4 L0,8 Z\" fill=\"#38bdf8\"/></marker>\n            <marker id=\"arrG\" markerWidth=\"8\" markerHeight=\"8\" refX=\"7\" refY=\"4\" orient=\"auto\"><path d=\"M0,0 L8,4 L0,8 Z\" fill=\"#4ade80\"/></marker>\n          </defs>\n          <!-- Cilindro Métricas -->\n          <rect x=\"555\" y=\"125\" width=\"95\" height=\"80\" rx=\"8\" fill=\"#eab308\" stroke=\"#fef08a\" stroke-width=\"2\"/>\n          <ellipse cx=\"602.5\" cy=\"125\" rx=\"47.5\" ry=\"12\" fill=\"#facc15\" stroke=\"#fef08a\" stroke-width=\"2\"/>\n          <text x=\"602.5\" y=\"172\" text-anchor=\"middle\" fill=\"#0f172a\" font-weight=\"800\" font-size=\"14\">Métricas</text>\n\n          <!-- Desarrollo -->\n          <rect x=\"200\" y=\"255\" width=\"120\" height=\"46\" rx=\"6\" fill=\"#fed7aa\" stroke=\"#fb923c\" stroke-width=\"2\"/>\n          <text x=\"260\" y=\"283\" text-anchor=\"middle\" fill=\"#7c2d12\" font-weight=\"800\" font-size=\"14\">Desarrollo</text>\n\n          <!-- Flechas Gestión -->\n          <path d=\"M150,95 Q165,135 215,150\" fill=\"none\" stroke=\"#38bdf8\" stroke-width=\"3\" marker-end=\"url(#arrB)\"/>\n          <path d=\"M235,175 Q175,215 205,255\" fill=\"none\" stroke=\"#38bdf8\" stroke-width=\"3\" marker-end=\"url(#arrB)\"/>\n          <path d=\"M320,278 Q375,270 395,235\" fill=\"none\" stroke=\"#38bdf8\" stroke-width=\"3\" marker-end=\"url(#arrB)\"/>\n\n          <!-- Grandes ajustes -->\n          <path d=\"M405,180 Q350,80 205,68\" fill=\"none\" stroke=\"#38bdf8\" stroke-width=\"2.5\" stroke-dasharray=\"5,3\" marker-end=\"url(#arrB)\"/>\n          <text x=\"325\" y=\"96\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"11\" font-weight=\"700\">grandes ajustes</text>\n\n          <!-- Pequeños ajustes [4] -->\n          <path d=\"M365,205 Q310,205 295,180\" fill=\"none\" stroke=\"#38bdf8\" stroke-width=\"2.5\" marker-end=\"url(#arrB)\"/>\n\n          <!-- Antecedentes [5] y Registro realidad [6] -->\n          <path d=\"M602,110 Q530,28 205,52\" fill=\"none\" stroke=\"#4ade80\" stroke-width=\"3.5\" marker-end=\"url(#arrG)\"/>\n          <path d=\"M475,215 Q560,235 595,208\" fill=\"none\" stroke=\"#4ade80\" stroke-width=\"3.5\" marker-end=\"url(#arrG)\"/>\n\n          <!-- Slots interactivos -->\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(65,42)\">\n            <rect width=\"138\" height=\"44\" rx=\"22\" class=\"slot-box\"/>\n            <text x=\"69\" y=\"27\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿Actividad?</text>\n          </g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(215,134)\">\n            <rect width=\"138\" height=\"44\" rx=\"22\" class=\"slot-box\"/>\n            <text x=\"69\" y=\"27\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿Actividad?</text>\n          </g>\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(365,185)\">\n            <rect width=\"138\" height=\"44\" rx=\"22\" class=\"slot-box\"/>\n            <text x=\"69\" y=\"27\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿Actividad?</text>\n          </g>\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(230,204)\">\n            <rect width=\"128\" height=\"32\" rx=\"6\" class=\"slot-box\"/>\n            <text x=\"64\" y=\"20\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿Retorno?</text>\n          </g>\n          <g class=\"svg-slot\" data-slot=\"4\" transform=\"translate(395,18)\">\n            <rect width=\"145\" height=\"32\" rx=\"6\" class=\"slot-box\"/>\n            <text x=\"72.5\" y=\"20\" text-anchor=\"middle\" class=\"slot-txt\">[5] ¿Aporte Métricas?</text>\n          </g>\n          <g class=\"svg-slot\" data-slot=\"5\" transform=\"translate(495,242)\">\n            <rect width=\"165\" height=\"34\" rx=\"6\" class=\"slot-box\"/>\n            <text x=\"82.5\" y=\"21\" text-anchor=\"middle\" class=\"slot-txt\">[6] ¿Hacia Métricas?</text>\n          </g>\n        </svg>\n        ", "trapNote": "Esquema fundamental de las págs. 11 y 14 (PDF 06) y pág. 3 (PDF 07): Del Seguimiento a Planificación van 'Pequeños ajustes'; a Estimación van 'Grandes ajustes'; del Seguimiento a Métricas va 'Registro de la realidad' y de Métricas a Estimación salen 'Antecedentes'."}, {"id": "diag-u3-clasif", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "title": "Complete el esquema de Clasificación de Métricas del Producto y del Proceso (PDF Métricas, pág. 16):", "options": ["Métricas de Productos", "Métricas de Procesos", "Métricas del Tamaño", "Métricas de Calidad", "Métricas Subjetivas", "Conductores de Costo"], "slots": [{"label": "Casilla [1] — Categoría raíz superior izquierda", "correct": "Métricas de Productos"}, {"label": "Casilla [2] — Subcategoría de LDC y Puntos de Función", "correct": "Métricas del Tamaño"}, {"label": "Casilla [3] — Subcategoría de Corrección, Fiabilidad y Mantenibilidad", "correct": "Métricas de Calidad"}, {"label": "Casilla [4] — Categoría raíz inferior izquierda (Tiempo, Recursos, Esfuerzo)", "correct": "Métricas de Procesos"}], "svg": "\n        <svg viewBox=\"0 0 680 300\" class=\"diag-svg\">\n          <!-- Líneas conectoras -->\n          <path d=\"M185,95 L235,55 M185,95 L235,135 M395,55 L435,55 M395,135 L435,135 M185,235 L435,235\" stroke=\"#64748b\" stroke-width=\"2.5\" fill=\"none\"/>\n\n          <!-- Cajas derechas fijas -->\n          <rect x=\"435\" y=\"25\" width=\"225\" height=\"58\" rx=\"8\" fill=\"#1e293b\" stroke=\"#475569\" stroke-width=\"1.5\"/>\n          <text x=\"448\" y=\"48\" fill=\"#e2e8f0\" font-size=\"12.5\">✓ Líneas de Código (LDC)</text>\n          <text x=\"448\" y=\"68\" fill=\"#e2e8f0\" font-size=\"12.5\">✓ Puntos de Función (PF)</text>\n\n          <rect x=\"435\" y=\"98\" width=\"225\" height=\"74\" rx=\"8\" fill=\"#1e293b\" stroke=\"#475569\" stroke-width=\"1.5\"/>\n          <text x=\"448\" y=\"119\" fill=\"#e2e8f0\" font-size=\"12\">✓ Corrección de Programas</text>\n          <text x=\"448\" y=\"138\" fill=\"#e2e8f0\" font-size=\"12\">✓ Fiabilidad del Software</text>\n          <text x=\"448\" y=\"157\" fill=\"#e2e8f0\" font-size=\"12\">✓ Mantenibilidad del Software</text>\n\n          <rect x=\"435\" y=\"192\" width=\"225\" height=\"88\" rx=\"8\" fill=\"#1e293b\" stroke=\"#475569\" stroke-width=\"1.5\"/>\n          <text x=\"448\" y=\"213\" fill=\"#cbd5e1\" font-size=\"12\">✓ Tiempo de Desarrollo</text>\n          <text x=\"448\" y=\"231\" fill=\"#cbd5e1\" font-size=\"12\">✓ Número y Tipo de Recurso</text>\n          <text x=\"448\" y=\"249\" fill=\"#cbd5e1\" font-size=\"12\">✓ Costo de Proceso / Esfuerzo</text>\n\n          <!-- Slots -->\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(20,73)\">\n            <rect width=\"165\" height=\"44\" rx=\"8\" class=\"slot-box\"/>\n            <text x=\"82.5\" y=\"27\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿Categoría?</text>\n          </g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(235,33)\">\n            <rect width=\"160\" height=\"42\" rx=\"8\" class=\"slot-box\"/>\n            <text x=\"80\" y=\"26\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿Subtipo?</text>\n          </g>\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(235,114)\">\n            <rect width=\"160\" height=\"42\" rx=\"8\" class=\"slot-box\"/>\n            <text x=\"80\" y=\"26\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿Subtipo?</text>\n          </g>\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(20,213)\">\n            <rect width=\"165\" height=\"44\" rx=\"8\" class=\"slot-box\"/>\n            <text x=\"82.5\" y=\"27\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿Categoría?</text>\n          </g>\n        </svg>\n        ", "trapNote": "Pág. 16 del PDF 06: No confundir Puntos de Función con Métrica de Proceso; los PF y las LDC miden el TAMAÑO del PRODUCTO."}, {"id": "diag-u3-cocomo", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "title": "Complete los ejes del espacio para situar un proyecto a estimar por COCOMO (Barry Boehm, 1981 — pág. 28):", "options": ["Orgánico", "Semirígido", "Rígido", "Básico", "Intermedio", "Detallado", "Evolutivo", "Incremental"], "slots": [{"label": "Casilla [1] — Modo superior (restricciones muy estrictas)", "correct": "Rígido"}, {"label": "Casilla [2] — Modo central (complejidad media)", "correct": "Semirígido"}, {"label": "Casilla [3] — Modo inferior (pequeño, sencillo, experimentado)", "correct": "Orgánico"}, {"label": "Casilla [4] — Modelo izquierdo (sólo LDC/KDSI)", "correct": "Básico"}, {"label": "Casilla [5] — Modelo central (LDC + 15 conductores)", "correct": "Intermedio"}, {"label": "Casilla [6] — Modelo derecho (impacto por cada fase)", "correct": "Detallado"}], "svg": "\n        <svg viewBox=\"0 0 680 320\" class=\"diag-svg\">\n          <text x=\"165\" y=\"26\" text-anchor=\"middle\" fill=\"#38bdf8\" font-size=\"12\" font-weight=\"800\">MODO DE DESARROLLO</text>\n          <line x1=\"190\" y1=\"245\" x2=\"190\" y2=\"40\" stroke=\"#94a3b8\" stroke-width=\"2.5\"/>\n          <line x1=\"190\" y1=\"245\" x2=\"620\" y2=\"245\" stroke=\"#94a3b8\" stroke-width=\"2.5\"/>\n          <text x=\"545\" y=\"298\" text-anchor=\"middle\" fill=\"#38bdf8\" font-size=\"12\" font-weight=\"800\">MODELOS DE APLICACIÓN</text>\n\n          <!-- Puntos de cruce 3x3 -->\n          <g fill=\"#38bdf8\">\n            <circle cx=\"275\" cy=\"72\" r=\"6\"/><circle cx=\"405\" cy=\"72\" r=\"6\"/><circle cx=\"535\" cy=\"72\" r=\"6\"/>\n            <circle cx=\"275\" cy=\"137\" r=\"6\"/><circle cx=\"405\" cy=\"137\" r=\"6\"/><circle cx=\"535\" cy=\"137\" r=\"6\"/>\n            <circle cx=\"275\" cy=\"202\" r=\"6\"/><circle cx=\"405\" cy=\"202\" r=\"6\"/><circle cx=\"535\" cy=\"202\" r=\"6\"/>\n          </g>\n          <g stroke=\"#334155\" stroke-dasharray=\"4,4\">\n            <line x1=\"190\" y1=\"72\" x2=\"560\" y2=\"72\"/><line x1=\"190\" y1=\"137\" x2=\"560\" y2=\"137\"/><line x1=\"190\" y1=\"202\" x2=\"560\" y2=\"202\"/>\n            <line x1=\"275\" y1=\"55\" x2=\"275\" y2=\"245\"/><line x1=\"405\" y1=\"55\" x2=\"405\" y2=\"245\"/><line x1=\"535\" y1=\"55\" x2=\"535\" y2=\"245\"/>\n          </g>\n\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(35,54)\"><rect width=\"142\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"71\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿Modo?</text></g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(35,119)\"><rect width=\"142\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"71\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿Modo?</text></g>\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(35,184)\"><rect width=\"142\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"71\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿Modo?</text></g>\n\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(215,254)\"><rect width=\"120\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"60\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿Modelo?</text></g>\n          <g class=\"svg-slot\" data-slot=\"4\" transform=\"translate(345,254)\"><rect width=\"120\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"60\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[5] ¿Modelo?</text></g>\n          <g class=\"svg-slot\" data-slot=\"5\" transform=\"translate(475,254)\"><rect width=\"120\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"60\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[6] ¿Modelo?</text></g>\n        </svg>\n        ", "trapNote": "Págs. 28-30 del PDF 06: Eje Y = Modos del proyecto (abajo Orgánico, medio Semirígido, arriba Rígido). Eje X = Jerarquía de Modelos de Boehm (Básico -> Intermedio -> Detallado)."}, {"id": "diag-u3-hierro", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "title": "Complete el Trinomio de Gestión (Triángulo de Hierro), su Variable Central Oculta y qué fija Scrum (págs. 42-46):", "options": ["Alcance", "Tiempo", "Precio / Costo", "Calidad", "Alcance Variable (Backlog)", "Alcance Fijo por Contrato"], "slots": [{"label": "Casilla [1] — Vértice superior (¿Qué vamos a construir?)", "correct": "Alcance"}, {"label": "Casilla [2] — Vértice inferior izquierdo (¿Cuándo se entrega?)", "correct": "Tiempo"}, {"label": "Casilla [3] — Vértice inferior derecho (¿Cuánto costará?)", "correct": "Precio / Costo"}, {"label": "Casilla [4] — Núcleo central absorbido si se fuerzan los 3 vértices", "correct": "Calidad"}, {"label": "Casilla [5] — En Scrum (Tiempo y Costo fijos), ¿cómo es el Alcance?", "correct": "Alcance Variable (Backlog)"}], "svg": "\n        <svg viewBox=\"0 0 680 320\" class=\"diag-svg\">\n          <polygon points=\"230,52 95,258 365,258\" fill=\"rgba(56,189,248,0.08)\" stroke=\"#38bdf8\" stroke-width=\"3\"/>\n          <!-- Caja comparativa derecha -->\n          <rect x=\"420\" y=\"65\" width=\"240\" height=\"190\" rx=\"10\" fill=\"#1e293b\" stroke=\"#475569\" stroke-width=\"1.5\"/>\n          <text x=\"540\" y=\"92\" text-anchor=\"middle\" fill=\"#f8fafc\" font-weight=\"800\" font-size=\"13\">ENFOQUE ÁGIL (SCRUM)</text>\n          <text x=\"540\" y=\"120\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"12\">• Tiempo: FIJO (Sprint 2-4 sem)</text>\n          <text x=\"540\" y=\"142\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"12\">• Costo: FIJO (Equipo estable)</text>\n          <text x=\"540\" y=\"172\" text-anchor=\"middle\" fill=\"#38bdf8\" font-size=\"12\" font-weight=\"700\">¿Cómo gestiona el Alcance?</text>\n\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(155,14)\"><rect width=\"150\" height=\"38\" rx=\"8\" class=\"slot-box\"/><text x=\"75\" y=\"24\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿Qué construir?</text></g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(20,264)\"><rect width=\"150\" height=\"38\" rx=\"8\" class=\"slot-box\"/><text x=\"75\" y=\"24\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿Cuándo?</text></g>\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(290,264)\"><rect width=\"150\" height=\"38\" rx=\"8\" class=\"slot-box\"/><text x=\"75\" y=\"24\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿Cuánto?</text></g>\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(155,168)\"><rect width=\"150\" height=\"42\" rx=\"21\" class=\"slot-box\"/><text x=\"75\" y=\"26\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿Centro oculto?</text></g>\n          <g class=\"svg-slot\" data-slot=\"4\" transform=\"translate(438,188)\"><rect width=\"204\" height=\"42\" rx=\"8\" class=\"slot-box\"/><text x=\"102\" y=\"26\" text-anchor=\"middle\" class=\"slot-txt\">[5] ¿Alcance en Scrum?</text></g>\n        </svg>\n        ", "trapNote": "Págs. 42-46 del PDF 06: En Cascada el Alcance es Fijo y Tiempo/Costo variables; en Scrum se invierte (Tiempo y Costo fijos, Alcance variable). Forzar las 3 esquinas sacrifica la Calidad."}, {"id": "diag-u5a-ir", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "title": "Complete las 4 etapas del proceso de Ingeniería de Requerimientos (IR) en orden (PDF Análisis, pág. 7):", "options": ["Descubrir", "Analizar", "Modelar", "Validar", "Codificar", "Depurar", "Compilar"], "slots": [{"label": "Casilla [1] — Establecer características del negocio con técnicas apropiadas", "correct": "Descubrir"}, {"label": "Casilla [2] — Organizar opciones y elegir la mejor alternativa de solución", "correct": "Analizar"}, {"label": "Casilla [3] — Traducir en modelos la solución a proponer", "correct": "Modelar"}, {"label": "Casilla [4] — Chequear con el cliente si el modelo se ajusta a sus necesidades", "correct": "Validar"}], "svg": "\n        <svg viewBox=\"0 0 680 280\" class=\"diag-svg\">\n          <polyline points=\"95,95 258,155 422,95 585,155\" fill=\"none\" stroke=\"#38bdf8\" stroke-width=\"3\"/>\n          <!-- Círculos numerados -->\n          <circle cx=\"95\" cy=\"52\" r=\"22\" fill=\"#22c55e\"/><text x=\"95\" y=\"59\" text-anchor=\"middle\" fill=\"#fff\" font-weight=\"800\" font-size=\"18\">1</text>\n          <circle cx=\"258\" cy=\"112\" r=\"22\" fill=\"#06b6d4\"/><text x=\"258\" y=\"119\" text-anchor=\"middle\" fill=\"#fff\" font-weight=\"800\" font-size=\"18\">2</text>\n          <circle cx=\"422\" cy=\"52\" r=\"22\" fill=\"#2563eb\"/><text x=\"422\" y=\"59\" text-anchor=\"middle\" fill=\"#fff\" font-weight=\"800\" font-size=\"18\">3</text>\n          <circle cx=\"585\" cy=\"112\" r=\"22\" fill=\"#475569\"/><text x=\"585\" y=\"119\" text-anchor=\"middle\" fill=\"#fff\" font-weight=\"800\" font-size=\"18\">4</text>\n\n          <text x=\"95\" y=\"166\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"10.5\">Características</text>\n          <text x=\"95\" y=\"180\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"10.5\">del negocio</text>\n\n          <text x=\"258\" y=\"226\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"10.5\">Elegir mejor</text>\n          <text x=\"258\" y=\"240\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"10.5\">alternativa</text>\n\n          <text x=\"422\" y=\"166\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"10.5\">Traducir en</text>\n          <text x=\"422\" y=\"180\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"10.5\">modelos</text>\n\n          <text x=\"585\" y=\"226\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"10.5\">Chequear con</text>\n          <text x=\"585\" y=\"240\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"10.5\">el cliente</text>\n\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(25,102)\"><rect width=\"140\" height=\"40\" rx=\"8\" class=\"slot-box\"/><text x=\"70\" y=\"25\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿Paso 1?</text></g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(188,162)\"><rect width=\"140\" height=\"40\" rx=\"8\" class=\"slot-box\"/><text x=\"70\" y=\"25\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿Paso 2?</text></g>\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(352,102)\"><rect width=\"140\" height=\"40\" rx=\"8\" class=\"slot-box\"/><text x=\"70\" y=\"25\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿Paso 3?</text></g>\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(515,162)\"><rect width=\"140\" height=\"40\" rx=\"8\" class=\"slot-box\"/><text x=\"70\" y=\"25\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿Paso 4?</text></g>\n        </svg>\n        ", "trapNote": "Pág. 7 del PDF 09: Los 4 nombres exactos de la diapositiva son: 1. DESCUBRIR -> 2. ANALIZAR -> 3. MODELAR -> 4. VALIDAR."}, {"id": "diag-u5a-entrevistas", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "title": "Identifique los 3 formatos geométricos de abordaje de una Entrevista y la 4ta Técnica de Relevamiento (PDF Análisis, págs. 10 y 12):", "options": ["Piramidal", "Embudo", "Rombo", "Revisión de Registros", "Espiral", "Cascada"], "slots": [{"label": "Casilla [1] — Inicia enfocada en el objetivo y luego amplía a más temas", "correct": "Piramidal"}, {"label": "Casilla [2] — Inicia con temario amplio y aborda el objetivo hacia el final", "correct": "Embudo"}, {"label": "Casilla [3] — Inicia en el objetivo, amplía a otros temas y regresa al objetivo", "correct": "Rombo"}, {"label": "Casilla [4] — 4ta técnica junto a Entrevistas, Cuestionarios y Observación", "correct": "Revisión de Registros"}], "svg": "\n        <svg viewBox=\"0 0 680 300\" class=\"diag-svg\">\n          <!-- Tarjeta 1: Piramidal -->\n          <rect x=\"18\" y=\"18\" width=\"200\" height=\"205\" rx=\"10\" fill=\"#1e293b\" stroke=\"#475569\"/>\n          <polygon points=\"118,88 62,198 174,198\" fill=\"rgba(74,222,128,0.28)\" stroke=\"#4ade80\" stroke-width=\"2\"/>\n          <line x1=\"192\" y1=\"90\" x2=\"192\" y2=\"195\" stroke=\"#94a3b8\" stroke-width=\"1.5\"/>\n          <text x=\"202\" y=\"148\" fill=\"#94a3b8\" font-size=\"10\" transform=\"rotate(90 202,148)\">tiempo →</text>\n\n          <!-- Tarjeta 2: Embudo -->\n          <rect x=\"240\" y=\"18\" width=\"200\" height=\"205\" rx=\"10\" fill=\"#1e293b\" stroke=\"#475569\"/>\n          <polygon points=\"284,88 396,88 340,198\" fill=\"rgba(56,189,248,0.28)\" stroke=\"#38bdf8\" stroke-width=\"2\"/>\n          <line x1=\"414\" y1=\"90\" x2=\"414\" y2=\"195\" stroke=\"#94a3b8\" stroke-width=\"1.5\"/>\n\n          <!-- Tarjeta 3: Rombo -->\n          <rect x=\"462\" y=\"18\" width=\"200\" height=\"205\" rx=\"10\" fill=\"#1e293b\" stroke=\"#475569\"/>\n          <polygon points=\"562,85 615,142 562,200 509,142\" fill=\"rgba(168,85,247,0.28)\" stroke=\"#c084fc\" stroke-width=\"2\"/>\n          <line x1=\"636\" y1=\"90\" x2=\"636\" y2=\"195\" stroke=\"#94a3b8\" stroke-width=\"1.5\"/>\n\n          <!-- Barra inferior 4 técnicas -->\n          <rect x=\"18\" y=\"240\" width=\"644\" height=\"46\" rx=\"8\" fill=\"#0f172a\" stroke=\"#334155\"/>\n          <text x=\"34\" y=\"268\" fill=\"#cbd5e1\" font-size=\"12.5\" font-weight=\"700\">Técnicas: 1) Entrevistas · 2) Cuestionarios · 3) Observación · 4)</text>\n\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(43,30)\"><rect width=\"150\" height=\"38\" rx=\"7\" class=\"slot-box\"/><text x=\"75\" y=\"24\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿Formato?</text></g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(265,30)\"><rect width=\"150\" height=\"38\" rx=\"7\" class=\"slot-box\"/><text x=\"75\" y=\"24\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿Formato?</text></g>\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(487,30)\"><rect width=\"150\" height=\"38\" rx=\"7\" class=\"slot-box\"/><text x=\"75\" y=\"24\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿Formato?</text></g>\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(442,245)\"><rect width=\"208\" height=\"36\" rx=\"7\" class=\"slot-box\"/><text x=\"104\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿4ta Técnica?</text></g>\n        </svg>\n        ", "trapNote": "¡Atención al nombre exacto del PDF de la cátedra! En pág. 12 lo llama 'ROMBO' (no Diamante), y en pág. 10 a la cuarta técnica la llama exactamente 'REVISIÓN DE REGISTROS'."}, {"id": "diag-u5d-piramide", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "title": "Complete los 4 niveles técnicos de la pirámide de 'El Modelo de Diseño' (PDF Diseño, págs. 4 y 5):", "options": ["Diseño Procedimental", "Diseño de Interfaz", "Diseño Arquitectónico", "Diseño de Datos", "Diccionario de Datos", "Codificación Binaria"], "slots": [{"label": "Casilla [1] — Cúspide de la pirámide (detalles algorítmicos de cada módulo)", "correct": "Diseño Procedimental"}, {"label": "Casilla [2] — Tercer nivel (comunicación entre subsistemas y con usuarios)", "correct": "Diseño de Interfaz"}, {"label": "Casilla [3] — Segundo nivel (estructura global de componentes)", "correct": "Diseño Arquitectónico"}, {"label": "Casilla [4] — Base ancha de la pirámide (estructuras de información)", "correct": "Diseño de Datos"}], "svg": "\n        <svg viewBox=\"0 0 680 310\" class=\"diag-svg\">\n          <!-- Trapecios de la pirámide -->\n          <polygon points=\"340,22 265,86 415,86\" fill=\"rgba(250,204,21,0.25)\" stroke=\"#facc15\" stroke-width=\"2\"/>\n          <polygon points=\"262,92 195,152 485,152 418,92\" fill=\"rgba(251,146,60,0.25)\" stroke=\"#fb923c\" stroke-width=\"2\"/>\n          <polygon points=\"192,158 125,218 555,218 488,158\" fill=\"rgba(74,222,128,0.25)\" stroke=\"#4ade80\" stroke-width=\"2\"/>\n          <polygon points=\"122,224 55,288 625,288 558,224\" fill=\"rgba(56,189,248,0.25)\" stroke=\"#38bdf8\" stroke-width=\"2\"/>\n\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(245,44)\"><rect width=\"190\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"95\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿Cúspide?</text></g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(245,104)\"><rect width=\"190\" height=\"38\" rx=\"6\" class=\"slot-box\"/><text x=\"95\" y=\"24\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿Nivel 3?</text></g>\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(235,169)\"><rect width=\"210\" height=\"38\" rx=\"6\" class=\"slot-box\"/><text x=\"105\" y=\"24\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿Nivel 2?</text></g>\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(235,237)\"><rect width=\"210\" height=\"38\" rx=\"6\" class=\"slot-box\"/><text x=\"105\" y=\"24\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿Base pirámide?</text></g>\n        </svg>\n        ", "trapNote": "Págs. 4 y 5 del PDF 10: De abajo hacia arriba: 1º Diseño de Datos (base) -> 2º Diseño Arquitectónico -> 3º Diseño de Interfaz -> 4º Diseño Procedimental (cúspide)."}, {"id": "diag-u5d-kruchten", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "title": "Complete el Modelo 4+1 Vistas de Philippe Kruchten (1995) según su foco y metáfora (PDF Diseño, págs. 8-14):", "options": ["Vista Lógica", "Vista de Desarrollo", "Vista de Proceso", "Vista Física (Despliegue)", "Escenarios / Casos de Uso (+1)", "Vista Monolítica", "Vista Financiera"], "slots": [{"label": "Casilla [1] — Superior Izq: Funcionalidad, Clases (Plano de Planta · Cliente)", "correct": "Vista Lógica"}, {"label": "Casilla [2] — Superior Der: Código, Paquetes, Librerías (Vigas · Programadores)", "correct": "Vista de Desarrollo"}, {"label": "Casilla [3] — Inferior Izq: Hilos, Concurrencia, Ejecución (Plano Eléctrico)", "correct": "Vista de Proceso"}, {"label": "Casilla [4] — Inferior Der: Servidores, Red, Nodos (Tuberías · DevOps)", "correct": "Vista Física (Despliegue)"}, {"label": "Casilla [5] — Óvalo Central: Une y valida las otras 4 vistas", "correct": "Escenarios / Casos de Uso (+1)"}], "svg": "\n        <svg viewBox=\"0 0 680 310\" class=\"diag-svg\">\n          <!-- Conexiones -->\n          <line x1=\"235\" y1=\"62\" x2=\"445\" y2=\"62\" stroke=\"#64748b\" stroke-width=\"2\"/>\n          <line x1=\"130\" y1=\"98\" x2=\"130\" y2=\"212\" stroke=\"#64748b\" stroke-width=\"2\"/>\n          <line x1=\"550\" y1=\"98\" x2=\"550\" y2=\"212\" stroke=\"#64748b\" stroke-width=\"2\"/>\n          <line x1=\"235\" y1=\"248\" x2=\"445\" y2=\"248\" stroke=\"#64748b\" stroke-width=\"2\"/>\n          <g stroke=\"#38bdf8\" stroke-width=\"2\" stroke-dasharray=\"5,4\">\n            <line x1=\"220\" y1=\"92\" x2=\"280\" y2=\"132\"/>\n            <line x1=\"460\" y1=\"92\" x2=\"400\" y2=\"132\"/>\n            <line x1=\"220\" y1=\"218\" x2=\"280\" y2=\"178\"/>\n            <line x1=\"460\" y1=\"218\" x2=\"400\" y2=\"178\"/>\n          </g>\n\n          <text x=\"130\" y=\"25\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"11\">Plano Planta · Clases</text>\n          <text x=\"550\" y=\"25\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"11\">Cimientos · Componentes</text>\n          <text x=\"130\" y=\"294\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"11\">Plano Eléctrico · Secuencia</text>\n          <text x=\"550\" y=\"294\" text-anchor=\"middle\" fill=\"#94a3b8\" font-size=\"11\">Tuberías · Hardware/Red</text>\n\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(30,36)\"><rect width=\"200\" height=\"48\" rx=\"8\" class=\"slot-box\"/><text x=\"100\" y=\"29\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿Vista Sup. Izq?</text></g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(450,36)\"><rect width=\"200\" height=\"48\" rx=\"8\" class=\"slot-box\"/><text x=\"100\" y=\"29\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿Vista Sup. Der?</text></g>\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(30,222)\"><rect width=\"200\" height=\"48\" rx=\"8\" class=\"slot-box\"/><text x=\"100\" y=\"29\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿Vista Inf. Izq?</text></g>\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(450,222)\"><rect width=\"200\" height=\"48\" rx=\"8\" class=\"slot-box\"/><text x=\"100\" y=\"29\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿Vista Inf. Der?</text></g>\n          <g class=\"svg-slot\" data-slot=\"4\" transform=\"translate(230,130)\"><rect width=\"220\" height=\"50\" rx=\"25\" class=\"slot-box\"/><text x=\"110\" y=\"30\" text-anchor=\"middle\" class=\"slot-txt\">[5] ¿Centro +1?</text></g>\n        </svg>\n        ", "trapNote": "Estándar IEEE 1471 / ISO 42010: Lógica (Funcionalidad/Cliente), Desarrollo (Código/Programadores), Proceso (Concurrencia/Ejecución), Física (Despliegue/DevOps) y +1 Escenarios/Casos de Uso en el centro."}, {"id": "diag-u5d-modularidad", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "title": "Identifique cada curva en el gráfico de Número de Módulos vs. Costos o Esfuerzo (PDF Diseño, pág. 19):", "options": ["Costos totales del software", "Costos de integración", "Costos por módulo", "Región de costo mínimo (M)", "Índice de fallos de hardware"], "slots": [{"label": "Casilla [1] — Curva superior en forma de 'U'", "correct": "Costos totales del software"}, {"label": "Casilla [2] — Curva que CRECE al aumentar el número de módulos", "correct": "Costos de integración"}, {"label": "Casilla [3] — Curva que BAJA al aumentar el número de módulos", "correct": "Costos por módulo"}, {"label": "Casilla [4] — Franja vertical central punteada en el valle", "correct": "Región de costo mínimo (M)"}], "svg": "\n        <svg viewBox=\"0 0 680 300\" class=\"diag-svg\">\n          <!-- Ejes -->\n          <line x1=\"90\" y1=\"255\" x2=\"90\" y2=\"25\" stroke=\"#94a3b8\" stroke-width=\"2.5\"/>\n          <line x1=\"90\" y1=\"255\" x2=\"620\" y2=\"255\" stroke=\"#94a3b8\" stroke-width=\"2.5\"/>\n          <text x=\"355\" y=\"285\" text-anchor=\"middle\" fill=\"#cbd5e1\" font-size=\"13\" font-weight=\"700\">Número de módulos →</text>\n          <text x=\"38\" y=\"145\" text-anchor=\"middle\" fill=\"#cbd5e1\" font-size=\"13\" font-weight=\"700\" transform=\"rotate(-90 38,145)\">Costos o esfuerzo →</text>\n\n          <!-- Franja M -->\n          <rect x=\"305\" y=\"45\" width=\"75\" height=\"210\" fill=\"rgba(56,189,248,0.08)\" stroke=\"#38bdf8\" stroke-dasharray=\"4,4\"/>\n\n          <!-- Curva Total (U) -->\n          <path d=\"M135,55 Q342,215 555,55\" fill=\"none\" stroke=\"#facc15\" stroke-width=\"3.5\"/>\n          <!-- Curva Costo por módulo (baja) -->\n          <path d=\"M130,95 Q240,225 565,242\" fill=\"none\" stroke=\"#4ade80\" stroke-width=\"3\"/>\n          <!-- Curva Costo integración (sube) -->\n          <path d=\"M130,242 Q430,225 565,90\" fill=\"none\" stroke=\"#f87171\" stroke-width=\"3\"/>\n\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(360,28)\"><rect width=\"195\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"97.5\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿Curva amarilla (U)?</text></g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(470,132)\"><rect width=\"190\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"95\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿Curva roja (sube)?</text></g>\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(105,155)\"><rect width=\"190\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"95\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿Curva verde (baja)?</text></g>\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(248,198)\"><rect width=\"190\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"95\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿Zona central M?</text></g>\n        </svg>\n        ", "trapNote": "Pág. 19 del PDF 10: Al dividir en más módulos baja el costo por módulo individual, pero sube el costo de integración; su suma forma la curva total con óptimo en M."}, {"id": "diag-u5d-cohesion", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "title": "Complete la Terminología de Estructura y los extremos de Cohesión y Acoplamiento (PDF Diseño, págs. 22, 31-32):", "options": ["Grado de salida", "Grado de entrada", "Coincidente", "Funcional", "Acoplamiento de datos", "Acoplamiento de contenido", "Profundidad"], "slots": [{"label": "Casilla [1] — Cantidad de módulos subordinados controlados por M", "correct": "Grado de salida"}, {"label": "Casilla [2] — Cantidad de módulos superiores que controlan a un módulo", "correct": "Grado de entrada"}, {"label": "Casilla [3] — Cohesión MÁS BAJA (dispersa, indeseable ☹️)", "correct": "Coincidente"}, {"label": "Casilla [4] — Cohesión MÁS ALTA (de un solo propósito, ideal 🙂)", "correct": "Funcional"}, {"label": "Casilla [5] — Acoplamiento MÁS ALTO (intrusivo, indeseable ☹️)", "correct": "Acoplamiento de contenido"}], "svg": "\n        <svg viewBox=\"0 0 680 315\" class=\"diag-svg\">\n          <!-- Mini árbol izquierda -->\n          <rect x=\"115\" y=\"20\" width=\"48\" height=\"28\" rx=\"4\" fill=\"#06b6d4\"/><text x=\"139\" y=\"39\" text-anchor=\"middle\" fill=\"#0f172a\" font-weight=\"800\">M</text>\n          <line x1=\"139\" y1=\"48\" x2=\"65\" y2=\"85\" stroke=\"#94a3b8\" stroke-width=\"2\"/>\n          <line x1=\"139\" y1=\"48\" x2=\"139\" y2=\"85\" stroke=\"#94a3b8\" stroke-width=\"2\"/>\n          <line x1=\"139\" y1=\"48\" x2=\"215\" y2=\"85\" stroke=\"#94a3b8\" stroke-width=\"2\"/>\n          <rect x=\"43\" y=\"85\" width=\"44\" height=\"26\" rx=\"4\" fill=\"#22c55e\"/><text x=\"65\" y=\"103\" text-anchor=\"middle\" fill=\"#0f172a\" font-weight=\"700\">a</text>\n          <rect x=\"117\" y=\"85\" width=\"44\" height=\"26\" rx=\"4\" fill=\"#22c55e\"/><text x=\"139\" y=\"103\" text-anchor=\"middle\" fill=\"#0f172a\" font-weight=\"700\">b</text>\n          <rect x=\"193\" y=\"85\" width=\"44\" height=\"26\" rx=\"4\" fill=\"#22c55e\"/><text x=\"215\" y=\"103\" text-anchor=\"middle\" fill=\"#0f172a\" font-weight=\"700\">c</text>\n\n          <line x1=\"65\" y1=\"111\" x2=\"139\" y2=\"155\" stroke=\"#facc15\" stroke-width=\"2\"/>\n          <line x1=\"139\" y1=\"111\" x2=\"139\" y2=\"155\" stroke=\"#facc15\" stroke-width=\"2\"/>\n          <line x1=\"215\" y1=\"111\" x2=\"139\" y2=\"155\" stroke=\"#facc15\" stroke-width=\"2\"/>\n          <rect x=\"117\" y=\"155\" width=\"44\" height=\"26\" rx=\"4\" fill=\"#38bdf8\"/><text x=\"139\" y=\"173\" text-anchor=\"middle\" fill=\"#0f172a\" font-weight=\"700\">f</text>\n\n          <!-- Barras Derecha: Cohesión y Acoplamiento -->\n          <text x=\"360\" y=\"34\" fill=\"#f8fafc\" font-weight=\"800\" font-size=\"13\">ESCALA DE COHESIÓN (Fuerza interna):</text>\n          <defs>\n            <linearGradient id=\"gradCoh\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\"><stop offset=\"0%\" stop-color=\"#ef4444\"/><stop offset=\"100%\" stop-color=\"#22c55e\"/></linearGradient>\n            <linearGradient id=\"gradAco\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\"><stop offset=\"0%\" stop-color=\"#22c55e\"/><stop offset=\"100%\" stop-color=\"#ef4444\"/></linearGradient>\n          </defs>\n          <rect x=\"360\" y=\"92\" width=\"295\" height=\"18\" rx=\"9\" fill=\"url(#gradCoh)\"/>\n          <text x=\"365\" y=\"126\" fill=\"#fca5a5\" font-size=\"11\">☹️ Baja (Disperso)</text>\n          <text x=\"565\" y=\"126\" fill=\"#86efac\" font-size=\"11\">🙂 Alta (1 propósito)</text>\n\n          <text x=\"360\" y=\"176\" fill=\"#f8fafc\" font-weight=\"800\" font-size=\"13\">ESCALA DE ACOPLAMIENTO (Interdependencia):</text>\n          <rect x=\"360\" y=\"238\" width=\"295\" height=\"18\" rx=\"9\" fill=\"url(#gradAco)\"/>\n          <text x=\"365\" y=\"274\" fill=\"#86efac\" font-size=\"11\">🙂 Bajo (Sin acopl./Datos)</text>\n          <text x=\"580\" y=\"274\" fill=\"#fca5a5\" font-size=\"11\">☹️ Alto (Peor)</text>\n\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(175,20)\"><rect width=\"150\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"75\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿Ramas desde M?</text></g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(65,195)\"><rect width=\"160\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"80\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿Llegan a 'f'?</text></g>\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(355,46)\"><rect width=\"142\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"71\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿Peor Cohesión?</text></g>\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(515,46)\"><rect width=\"142\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"71\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿Mejor Cohesión?</text></g>\n          <g class=\"svg-slot\" data-slot=\"4\" transform=\"translate(465,190)\"><rect width=\"195\" height=\"36\" rx=\"6\" class=\"slot-box\"/><text x=\"97.5\" y=\"23\" text-anchor=\"middle\" class=\"slot-txt\">[5] ¿Peor Acoplamiento?</text></g>\n        </svg>\n        ", "trapNote": "Págs. 22, 31 y 32 del PDF 10: Grado de salida = ramas que bajan; Grado de entrada = ramas que llegan al módulo. Cohesión va de Coincidente a Funcional; Acoplamiento termina en Acoplamiento de contenido (peor)."}, {"id": "diag-u6t-espiral", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "title": "Complete los 4 niveles del Modelo en Espiral de Estrategia de Prueba desde el centro hacia afuera (PDF Prueba, pág. 10):", "options": ["Prueba de Unidad", "Prueba de Integración", "Prueba de Validación", "Prueba del Sistema", "Depuración", "Prueba de Humo"], "slots": [{"label": "Casilla [1] — Anillo central (asociado a Codificación 'C')", "correct": "Prueba de Unidad"}, {"label": "Casilla [2] — Segundo anillo (asociado a Diseño 'D')", "correct": "Prueba de Integración"}, {"label": "Casilla [3] — Tercer anillo (asociado a Análisis de Requisitos 'R')", "correct": "Prueba de Validación"}, {"label": "Casilla [4] — Anillo exterior (asociado a Ingeniería del Sistema 'S')", "correct": "Prueba del Sistema"}], "svg": "\n        <svg viewBox=\"0 0 680 310\" class=\"diag-svg\">\n          <!-- Círculos concéntricos -->\n          <circle cx=\"320\" cy=\"155\" r=\"128\" fill=\"rgba(148,163,184,0.14)\" stroke=\"#64748b\" stroke-width=\"2\"/>\n          <circle cx=\"320\" cy=\"155\" r=\"96\" fill=\"rgba(56,189,248,0.14)\" stroke=\"#38bdf8\" stroke-width=\"2\"/>\n          <circle cx=\"320\" cy=\"155\" r=\"64\" fill=\"rgba(74,222,128,0.16)\" stroke=\"#4ade80\" stroke-width=\"2\"/>\n          <circle cx=\"320\" cy=\"155\" r=\"32\" fill=\"rgba(251,146,60,0.35)\" stroke=\"#fb923c\" stroke-width=\"2\"/>\n\n          <!-- Etiquetas Izquierdas (Desarrollo) -->\n          <text x=\"145\" y=\"42\" text-anchor=\"end\" fill=\"#cbd5e1\" font-size=\"12\">Ingeniería del Sistema (S)</text>\n          <line x1=\"152\" y1=\"38\" x2=\"320\" y2=\"38\" stroke=\"#94a3b8\" stroke-dasharray=\"3,3\"/>\n          <text x=\"145\" y=\"74\" text-anchor=\"end\" fill=\"#cbd5e1\" font-size=\"12\">Análisis de Requisitos (R)</text>\n          <line x1=\"152\" y1=\"70\" x2=\"320\" y2=\"70\" stroke=\"#94a3b8\" stroke-dasharray=\"3,3\"/>\n          <text x=\"145\" y=\"106\" text-anchor=\"end\" fill=\"#cbd5e1\" font-size=\"12\">Diseño (D)</text>\n          <line x1=\"152\" y1=\"102\" x2=\"320\" y2=\"102\" stroke=\"#94a3b8\" stroke-dasharray=\"3,3\"/>\n          <text x=\"145\" y=\"138\" text-anchor=\"end\" fill=\"#cbd5e1\" font-size=\"12\">Codificación (C)</text>\n          <line x1=\"152\" y1=\"134\" x2=\"320\" y2=\"134\" stroke=\"#94a3b8\" stroke-dasharray=\"3,3\"/>\n\n          <!-- Líneas hacia la derecha (Pruebas) -->\n          <line x1=\"320\" y1=\"162\" x2=\"455\" y2=\"162\" stroke=\"#fb923c\" stroke-width=\"2\"/>\n          <line x1=\"320\" y1=\"204\" x2=\"455\" y2=\"204\" stroke=\"#4ade80\" stroke-width=\"2\"/>\n          <line x1=\"320\" y1=\"242\" x2=\"455\" y2=\"242\" stroke=\"#38bdf8\" stroke-width=\"2\"/>\n          <line x1=\"320\" y1=\"278\" x2=\"455\" y2=\"278\" stroke=\"#94a3b8\" stroke-width=\"2\"/>\n\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(460,144)\"><rect width=\"195\" height=\"34\" rx=\"6\" class=\"slot-box\"/><text x=\"97.5\" y=\"22\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿Centro (U)?</text></g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(460,186)\"><rect width=\"195\" height=\"34\" rx=\"6\" class=\"slot-box\"/><text x=\"97.5\" y=\"22\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿2do anillo (I)?</text></g>\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(460,226)\"><rect width=\"195\" height=\"34\" rx=\"6\" class=\"slot-box\"/><text x=\"97.5\" y=\"22\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿3er anillo (V)?</text></g>\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(460,266)\"><rect width=\"195\" height=\"34\" rx=\"6\" class=\"slot-box\"/><text x=\"97.5\" y=\"22\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿Exterior (S)?</text></g>\n        </svg>\n        ", "trapNote": "Pág. 10 del PDF 12: Comienza 'en lo pequeño' en el centro con Unidad (U <-> Codificación), pasa a Integración (I <-> Diseño), luego Validación (V <-> Requisitos) y finalmente Sistema (S <-> Ing. del Sistema)."}, {"id": "diag-u6t-modelov", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "title": "Complete las correspondencias del 'Modelo en V' entre Desarrollo y Pruebas (PDF Prueba, pág. 12):", "options": ["Captura de Requisitos", "Diseño del Sistema", "Desarrollo del Sistema", "Componentes", "Integración y Sistema", "Aceptación", "Estudio de Factibilidad"], "slots": [{"label": "Casilla [1] — Izquierda Superior (Desarrollo nivel negocio)", "correct": "Captura de Requisitos"}, {"label": "Casilla [2] — Izquierda Media (Arquitectura / Diseño)", "correct": "Diseño del Sistema"}, {"label": "Casilla [3] — Izquierda Inferior (Implementación)", "correct": "Desarrollo del Sistema"}, {"label": "Casilla [4] — Derecha Inferior (Valida [3] a pequeña escala)", "correct": "Componentes"}, {"label": "Casilla [5] — Derecha Media (Valida [2])", "correct": "Integración y Sistema"}, {"label": "Casilla [6] — Derecha Superior (Valida [1] con el cliente)", "correct": "Aceptación"}], "svg": "\n        <svg viewBox=\"0 0 680 300\" class=\"diag-svg\">\n          <text x=\"135\" y=\"28\" text-anchor=\"middle\" fill=\"#fb923c\" font-weight=\"800\" font-size=\"13\">DESARROLLO ↘</text>\n          <text x=\"545\" y=\"28\" text-anchor=\"middle\" fill=\"#4ade80\" font-weight=\"800\" font-size=\"13\">↗ PRUEBAS</text>\n          <line x1=\"340\" y1=\"15\" x2=\"340\" y2=\"290\" stroke=\"#334155\" stroke-dasharray=\"4,4\"/>\n\n          <!-- Flechas diagonales V -->\n          <line x1=\"125\" y1=\"90\" x2=\"175\" y2=\"145\" stroke=\"#fb923c\" stroke-width=\"3\"/>\n          <line x1=\"195\" y1=\"185\" x2=\"235\" y2=\"235\" stroke=\"#fb923c\" stroke-width=\"3\"/>\n          <line x1=\"445\" y1=\"235\" x2=\"485\" y2=\"185\" stroke=\"#4ade80\" stroke-width=\"3\"/>\n          <line x1=\"505\" y1=\"145\" x2=\"555\" y2=\"90\" stroke=\"#4ade80\" stroke-width=\"3\"/>\n\n          <!-- Flechas horizontales de validación -->\n          <line x1=\"215\" y1=\"70\" x2=\"465\" y2=\"70\" stroke=\"#facc15\" stroke-width=\"2.5\" stroke-dasharray=\"6,3\"/>\n          <line x1=\"265\" y1=\"163\" x2=\"415\" y2=\"163\" stroke=\"#facc15\" stroke-width=\"2.5\" stroke-dasharray=\"6,3\"/>\n          <line x1=\"315\" y1=\"255\" x2=\"365\" y2=\"255\" stroke=\"#facc15\" stroke-width=\"2.5\"/>\n\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(30,50)\"><rect width=\"182\" height=\"40\" rx=\"6\" class=\"slot-box\"/><text x=\"91\" y=\"25\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿Des. Nivel 1?</text></g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(82,143)\"><rect width=\"182\" height=\"40\" rx=\"6\" class=\"slot-box\"/><text x=\"91\" y=\"25\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿Des. Nivel 2?</text></g>\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(132,235)\"><rect width=\"182\" height=\"40\" rx=\"6\" class=\"slot-box\"/><text x=\"91\" y=\"25\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿Des. Nivel 3?</text></g>\n\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(366,235)\"><rect width=\"182\" height=\"40\" rx=\"6\" class=\"slot-box\"/><text x=\"91\" y=\"25\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿Prueba Nivel 3?</text></g>\n          <g class=\"svg-slot\" data-slot=\"4\" transform=\"translate(416,143)\"><rect width=\"182\" height=\"40\" rx=\"6\" class=\"slot-box\"/><text x=\"91\" y=\"25\" text-anchor=\"middle\" class=\"slot-txt\">[5] ¿Prueba Nivel 2?</text></g>\n          <g class=\"svg-slot\" data-slot=\"5\" transform=\"translate(468,50)\"><rect width=\"182\" height=\"40\" rx=\"6\" class=\"slot-box\"/><text x=\"91\" y=\"25\" text-anchor=\"middle\" class=\"slot-txt\">[6] ¿Prueba Nivel 1?</text></g>\n        </svg>\n        ", "trapNote": "Nombres textuales de la pág. 12 del PDF 12: Izquierda = Captura de Requisitos -> Diseño del Sistema -> Desarrollo del Sistema. Derecha (abajo a arriba) = Componentes -> Integración y Sistema -> Aceptación."}, {"id": "diag-u4-esfuerzo", "unit": "U4", "unitLabel": "Unidad IV · Planificación y Control", "title": "Complete la Distribución Recomendada de Esfuerzos (Regla 40-20-40) y los 4 Pasos del Control (PDF Planif., págs. 11 y 17):", "options": ["Análisis y diseño (40-50%)", "Codificación (15-20%)", "Prueba y depuración (30-40%)", "Definir una medida", "Calcular la desviación", "Tomar acciones correctivas", "Mantenimiento (80%)"], "slots": [{"label": "Casilla [1] — Primera barra de esfuerzo (40 - 50%)", "correct": "Análisis y diseño (40-50%)"}, {"label": "Casilla [2] — Barra menor de construcción (sólo 15 - 20%)", "correct": "Codificación (15-20%)"}, {"label": "Casilla [3] — Barra final de verificación (30 - 40%)", "correct": "Prueba y depuración (30-40%)"}, {"label": "Casilla [4] — Paso 1 del Control (antes de Registrar el avance)", "correct": "Definir una medida"}, {"label": "Casilla [5] — Paso 4 del Control (luego de Calcular la desviación)", "correct": "Tomar acciones correctivas"}], "svg": "\n        <svg viewBox=\"0 0 680 300\" class=\"diag-svg\">\n          <text x=\"340\" y=\"26\" text-anchor=\"middle\" fill=\"#38bdf8\" font-weight=\"800\" font-size=\"13\">DISTRIBUCIÓN DE ESFUERZOS — REGLA 40 - 20 - 40 (Planificación &lt; 3%)</text>\n          <!-- Barra segmentada -->\n          <rect x=\"35\" y=\"42\" width=\"255\" height=\"68\" rx=\"8\" fill=\"rgba(56,189,248,0.2)\" stroke=\"#38bdf8\" stroke-width=\"2\"/>\n          <rect x=\"296\" y=\"42\" width=\"128\" height=\"68\" rx=\"8\" fill=\"rgba(250,204,21,0.2)\" stroke=\"#facc15\" stroke-width=\"2\"/>\n          <rect x=\"430\" y=\"42\" width=\"215\" height=\"68\" rx=\"8\" fill=\"rgba(74,222,128,0.2)\" stroke=\"#4ade80\" stroke-width=\"2\"/>\n\n          <!-- Sección inferior: 4 pasos del control -->\n          <text x=\"340\" y=\"156\" text-anchor=\"middle\" fill=\"#f8fafc\" font-weight=\"800\" font-size=\"13\">LOS 4 PASOS DEL CONTROL DEL PROYECTO (Pág. 17):</text>\n          <rect x=\"195\" y=\"182\" width=\"135\" height=\"44\" rx=\"8\" fill=\"#1e293b\" stroke=\"#64748b\"/>\n          <text x=\"262.5\" y=\"201\" text-anchor=\"middle\" fill=\"#cbd5e1\" font-size=\"11\" font-weight=\"700\">2. Registrar</text>\n          <text x=\"262.5\" y=\"217\" text-anchor=\"middle\" fill=\"#cbd5e1\" font-size=\"11\">el avance</text>\n\n          <rect x=\"348\" y=\"182\" width=\"135\" height=\"44\" rx=\"8\" fill=\"#1e293b\" stroke=\"#64748b\"/>\n          <text x=\"415.5\" y=\"201\" text-anchor=\"middle\" fill=\"#cbd5e1\" font-size=\"11\" font-weight=\"700\">3. Calcular</text>\n          <text x=\"415.5\" y=\"217\" text-anchor=\"middle\" fill=\"#cbd5e1\" font-size=\"11\">la desviación</text>\n\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(48,57)\"><rect width=\"228\" height=\"38\" rx=\"6\" class=\"slot-box\"/><text x=\"114\" y=\"24\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿40% Inicial?</text></g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(302,57)\"><rect width=\"116\" height=\"38\" rx=\"6\" class=\"slot-box\"/><text x=\"58\" y=\"24\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿20%?</text></g>\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(440,57)\"><rect width=\"195\" height=\"38\" rx=\"6\" class=\"slot-box\"/><text x=\"97.5\" y=\"24\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿40% Final?</text></g>\n\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(28,182)\"><rect width=\"152\" height=\"44\" rx=\"8\" class=\"slot-box\"/><text x=\"76\" y=\"27\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿Paso 1?</text></g>\n          <g class=\"svg-slot\" data-slot=\"4\" transform=\"translate(498,182)\"><rect width=\"158\" height=\"44\" rx=\"8\" class=\"slot-box\"/><text x=\"79\" y=\"27\" text-anchor=\"middle\" class=\"slot-txt\">[5] ¿Paso 4?</text></g>\n        </svg>\n        ", "trapNote": "Págs. 11 y 17 del PDF 07: Regla 40-20-40 = Análisis y diseño (40-50%), Codificación (15-20%), Prueba y depuración (30-40%). Control = 1. Definir medida -> 2. Registrar avance -> 3. Calcular desviación -> 4. Tomar acciones correctivas."}, {"id": "diag-u6p-case", "unit": "U6P", "unitLabel": "Unidad VI · Codificación y CASE", "title": "Complete el esquema de Traducción en Programación y las categorías de Herramientas CASE (PDF Programación, págs. 6 y 9):", "options": ["Código fuente", "Código binario", "Upper CASE", "Middle CASE", "Lower CASE", "Sistema Objeto"], "slots": [{"label": "Casilla [1] — Entrada escrita por el programador", "correct": "Código fuente"}, {"label": "Casilla [2] — Salida ejecutable tras compilar o interpretar", "correct": "Código binario"}, {"label": "Casilla [3] — Nivel superior CASE (Reingeniería/Análisis/Modelado)", "correct": "Upper CASE"}, {"label": "Casilla [4] — Nivel intermedio CASE (Soporte métodos / Prototipado)", "correct": "Middle CASE"}, {"label": "Casilla [5] — Nivel base CASE (Gestión config., Edición, Planificación transversal)", "correct": "Lower CASE"}], "svg": "\n        <svg viewBox=\"0 0 680 290\" class=\"diag-svg\">\n          <!-- Izquierda: Programación -->\n          <rect x=\"20\" y=\"20\" width=\"310\" height=\"250\" rx=\"10\" fill=\"#1e293b\" stroke=\"#475569\"/>\n          <text x=\"175\" y=\"45\" text-anchor=\"middle\" fill=\"#38bdf8\" font-weight=\"800\" font-size=\"12.5\">TRADUCCIÓN DE PROGRAMACIÓN</text>\n          <path d=\"M115,120 Q175,90 235,120\" fill=\"none\" stroke=\"#fb923c\" stroke-width=\"2.5\"/>\n          <text x=\"175\" y=\"100\" text-anchor=\"middle\" fill=\"#fdba74\" font-size=\"11.5\" font-weight=\"700\">interpretar →</text>\n          <path d=\"M115,195 Q175,225 235,195\" fill=\"none\" stroke=\"#fb923c\" stroke-width=\"2.5\"/>\n          <text x=\"175\" y=\"226\" text-anchor=\"middle\" fill=\"#fdba74\" font-size=\"11.5\" font-weight=\"700\">compilar →</text>\n\n          <!-- Derecha: CASE -->\n          <rect x=\"350\" y=\"20\" width=\"310\" height=\"250\" rx=\"10\" fill=\"#1e293b\" stroke=\"#475569\"/>\n          <text x=\"505\" y=\"45\" text-anchor=\"middle\" fill=\"#4ade80\" font-weight=\"800\" font-size=\"12.5\">ESTRUCTURA HERRAMIENTAS C.A.S.E.</text>\n          <text x=\"380\" y=\"110\" fill=\"#f8fafc\" font-weight=\"900\" font-size=\"24\">C</text>\n          <text x=\"380\" y=\"142\" fill=\"#f8fafc\" font-weight=\"900\" font-size=\"24\">A</text>\n          <text x=\"380\" y=\"174\" fill=\"#f8fafc\" font-weight=\"900\" font-size=\"24\">S</text>\n          <text x=\"380\" y=\"206\" fill=\"#f8fafc\" font-weight=\"900\" font-size=\"24\">E</text>\n\n          <g class=\"svg-slot\" data-slot=\"0\" transform=\"translate(32,136)\"><rect width=\"132\" height=\"42\" rx=\"7\" class=\"slot-box\"/><text x=\"66\" y=\"26\" text-anchor=\"middle\" class=\"slot-txt\">[1] ¿Origen?</text></g>\n          <g class=\"svg-slot\" data-slot=\"1\" transform=\"translate(186,136)\"><rect width=\"132\" height=\"42\" rx=\"7\" class=\"slot-box\"/><text x=\"66\" y=\"26\" text-anchor=\"middle\" class=\"slot-txt\">[2] ¿Destino?</text></g>\n\n          <g class=\"svg-slot\" data-slot=\"2\" transform=\"translate(425,72)\"><rect width=\"205\" height=\"40\" rx=\"7\" class=\"slot-box\"/><text x=\"102.5\" y=\"25\" text-anchor=\"middle\" class=\"slot-txt\">[3] ¿Nivel Superior?</text></g>\n          <g class=\"svg-slot\" data-slot=\"3\" transform=\"translate(425,134)\"><rect width=\"205\" height=\"40\" rx=\"7\" class=\"slot-box\"/><text x=\"102.5\" y=\"25\" text-anchor=\"middle\" class=\"slot-txt\">[4] ¿Nivel Medio?</text></g>\n          <g class=\"svg-slot\" data-slot=\"4\" transform=\"translate(425,196)\"><rect width=\"205\" height=\"40\" rx=\"7\" class=\"slot-box\"/><text x=\"102.5\" y=\"25\" text-anchor=\"middle\" class=\"slot-txt\">[5] ¿Nivel Inferior?</text></g>\n        </svg>\n        ", "trapNote": "Págs. 6 y 9 del PDF 11: Código fuente -> interpretar / compilar -> Código binario. Y en la pág. 9 el corchete CASE distingue tres franjas: Upper, Middle y Lower."}], "matrices": [{"id": "mat-u3-pf", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "prompt": "Indique TODOS los conceptos y parámetros que forman parte verdadera de la Estimación por Puntos de Función (Albrecht / IFPUG). Marque con X únicamente las correctas:", "items": [{"text": "Modos Orgánico, Semirígido y Rígido", "correct": false}, {"text": "Fórmula FA = (TDI x 0.01) + 0.65", "correct": true}, {"text": "14 características generales ponderadas de 0 a 5", "correct": true}, {"text": "15 conductores de costo de hardware y personal", "correct": false}, {"text": "Exige conocer primero las miles de líneas de código (KDSI)", "correct": false}, {"text": "Es una métrica intransferible exclusiva de Scrum", "correct": false}, {"text": "Escala de ponderación de características de 1 a 10", "correct": false}, {"text": "Entradas, Salidas y Consultas externas", "correct": true}, {"text": "Mide el tamaño funcional independientemente de la tecnología", "correct": true}, {"text": "Ficheros (Grupos de Datos) Lógicos Internos y Externos", "correct": true}], "trapNote": "KDSI, Modos Orgánico/Semirígido/Rígido y los 15 conductores pertenecen a COCOMO (no a Puntos de Función). Y la escala de las 14 características de PF va de 0 a 5, nunca de 1 a 10."}, {"id": "mat-u3-agil", "unit": "U3", "unitLabel": "Unidad III · Métricas y Estimaciones", "prompt": "Indique cuáles de los siguientes conceptos corresponden EXCLUSIVAMENTE a la Estimación y Gestión Ágil (Scrum / Puntos de Historia). Marque con X las correctas:", "items": [{"text": "Velocity empírica calculada tras los primeros Sprints", "correct": true}, {"text": "Alcance congelado al 100% al inicio del proyecto", "correct": false}, {"text": "Tiempo y Costo fijos (Timebox); Alcance variable priorizado", "correct": true}, {"text": "Sucesión de Fibonacci (1, 2, 3, 5, 8, 13, 21...)", "correct": true}, {"text": "Uso de una 'Historia Ancla' conocida como base de comparación", "correct": true}, {"text": "La Velocity la impone el gerente el día 1", "correct": false}, {"text": "Cálculo de meses/hombre mediante MM = 2,4 (KDSI)^1.05", "correct": false}, {"text": "Esfuerzo relativo + Complejidad + Riesgo/Incertidumbre", "correct": true}, {"text": "Comparar puntos completados para rankear dos equipos distintos", "correct": false}, {"text": "Validación funcional recién en la fase final del año", "correct": false}], "trapNote": "En Ágil la métrica es propia de cada equipo (no sirve para comparar dos equipos), la Velocity jamás se impone el día 1 y el Alcance es la variable flexible del Triángulo de Hierro."}, {"id": "mat-u4-planif", "unit": "U4", "unitLabel": "Unidad IV · Planificación y Control", "prompt": "Marque con X TODAS las afirmaciones VERDADERAS sobre Planificación Temporal y Seguimiento/Control de Proyectos según el PDF de la cátedra:", "items": [{"text": "Prueba y depuración representan menos del 5% del esfuerzo", "correct": false}, {"text": "La planificación consume habitualmente el 40% del presupuesto total", "correct": false}, {"text": "Regla 40-20-40: la codificación ronda sólo el 15-20% del esfuerzo", "correct": true}, {"text": "El mantenimiento llega a ser el factor de mayor costo", "correct": true}, {"text": "Agregar gente a un proyecto atrasado no sube linealmente la productividad", "correct": true}, {"text": "El esfuerzo termina por completo al instalar el software", "correct": false}, {"text": "PERT y CPM permiten hallar el camino crítico y la holgura", "correct": true}, {"text": "La planificación temporal sólo se hace una vez al firmar contrato", "correct": false}, {"text": "Peligros del control: Perturbaciones, Personal y Entorno", "correct": true}, {"text": "Los proyectos sólo se atrasan de golpe, nunca día a día", "correct": false}], "trapNote": "El esfuerzo de planificación se mantiene bajo el 3% (no 40%), Prueba/Depuración lleva 30-40%, y los proyectos normalmente se salen de agenda 'día a día'."}, {"id": "mat-u5a-relev", "unit": "U5A", "unitLabel": "Unidad V · Análisis de Requerimientos", "prompt": "Indique TODOS los conceptos VERDADEROS asociados al Análisis y Técnicas de Relevamiento de Requerimientos (Marque con X las correctas):", "items": [{"text": "El Sistema de Información abarca la totalidad absoluta de la Realidad", "correct": false}, {"text": "La entrevista No Estructurada carece de objetivo", "correct": false}, {"text": "Los Cuestionarios NO permiten ver expresiones o reacciones", "correct": true}, {"text": "El Sistema Objeto es la percepción de la realidad que tiene el analista", "correct": true}, {"text": "El análisis va de la información esencial al detalle de implementación", "correct": true}, {"text": "Los Requerimientos del Usuario son código fuente detallado", "correct": false}, {"text": "En Revisión de Registros conviene pedir copias de documentos USADOS", "correct": true}, {"text": "Las entrevistas deben planificarse; NO se pueden improvisar", "correct": true}, {"text": "En Revisión de Registros sólo sirven formularios en blanco", "correct": false}, {"text": "El formato Embudo inicia en el objetivo y se abre al final", "correct": false}], "trapNote": "En Revisión de Registros se piden formularios USADOS (no en blanco). Iniciar en el objetivo y abrir al final es formato PIRAMIDAL (Embudo inicia amplio y cierra en el objetivo)."}, {"id": "mat-u5d-kruchten", "unit": "U5D", "unitLabel": "Unidad V · Conceptos de Diseño", "prompt": "Marque con X TODAS las relaciones VERDADERAS sobre Diseño Modular y el Modelo 4+1 Vistas de Kruchten:", "items": [{"text": "Dividir en infinitos módulos reduce a cero el costo de integración", "correct": false}, {"text": "El acoplamiento de Contenido es el más bajo e ideal", "correct": false}, {"text": "La Jerarquía de Control detalla los bucles procedimentales internos", "correct": false}, {"text": "Vista de Desarrollo <-> Vigas/Cimientos <-> Componentes y Paquetes", "correct": true}, {"text": "Diseño efectivo exige Alta Cohesión y Bajo Acoplamiento", "correct": true}, {"text": "Vista Física <-> Tuberías/Fontanería <-> DevOps / Despliegue", "correct": true}, {"text": "Partición Vertical: decisiones arriba y trabajo abajo", "correct": true}, {"text": "Un cambio en un módulo trabajador propaga más error que uno de control", "correct": false}, {"text": "La cohesión Coincidente es la más deseable de todas", "correct": false}, {"text": "Vista de Proceso <-> Plano Eléctrico <-> Concurrencia / Secuencia", "correct": true}], "trapNote": "Coincidente es la PEOR cohesión y Contenido es el PEOR acoplamiento. Un cambio en la parte alta (control) tiene mucha mayor probabilidad de propagar error que en los módulos inferiores de trabajo."}, {"id": "mat-u6t-pruebas", "unit": "U6T", "unitLabel": "Unidad VI · Prueba de Software (hasta Humo)", "prompt": "Marque con X TODOS los principios y conceptos VERDADEROS de Prueba de Software (hasta Prueba de Humo, pág. 13):", "items": [{"text": "Caja Negra analiza los caminos lógicos internos del código fuente", "correct": false}, {"text": "Una prueba es exitosa cuando descubre un error no detectado aún", "correct": true}, {"text": "Caja Blanca: estructura de control ('prueba a pequeña escala')", "correct": true}, {"text": "Verificación: ¿Estamos construyendo el producto correctamente?", "correct": true}, {"text": "Validación: ¿Estamos construyendo el producto correctamente?", "correct": false}, {"text": "Una prueba es exitosa cuando no arroja ningún error", "correct": false}, {"text": "Conviene que sólo pruebe el mismo autor que programó el sistema", "correct": false}, {"text": "Prueba de Humo: verificación rápida inicial de fallos críticos", "correct": true}, {"text": "La prueba sólo demuestra presencia de defectos, nunca su ausencia", "correct": true}, {"text": "Prueba y Depuración son exactamente la misma actividad", "correct": false}], "trapNote": "Validación pregunta '¿Estamos construyendo el producto CORRECTO?', mientras Verificación pregunta '¿...CORRECTAMENTE?'. Prueba y Depuración son actividades distintas."}]};
+
+    let appMode = 'exam'; // 'exam' | 'practice' | 'cheat'
+    let practiceFilter = 'ALL';
+    let examItems = []; // 10 items in current exam
+    let examGraded = false;
+
+    // User state keyed by renderKey
+    let mcAnswers = {};      // { key: Set<number> }
+    let diagAnswers = {};    // { key: { slotIdx: string } }
+    let matrixAnswers = {};  // { key: Set<number> }
+    let practiceGraded = {}; // { key: boolean }
+
+    // Timer state
+    let secondsLeft = 1200;
+    let timerPaused = false;
+    let timerInterval = null;
+
+    // Active picker target
+    let activePicker = null; // { key, diagObj, slotIdx }
+
+    // LocalStorage helpers
+    function getMistakes() {
+      try { return new Set(JSON.parse(localStorage.getItem('sim2p_mistakes') || '[]')); }
+      catch { return new Set(); }
+    }
+    function saveMistakes(setObj) {
+      try { localStorage.setItem('sim2p_mistakes', JSON.stringify([...setObj])); } catch {}
+    }
+    function recordAttempt(score) {
+      try {
+        const hist = JSON.parse(localStorage.getItem('sim2p_history') || '[]');
+        hist.push({ score, ts: Date.now() });
+        localStorage.setItem('sim2p_history', JSON.stringify(hist.slice(-30)));
+        updateHistoryLabel();
+      } catch {}
+    }
+    function updateHistoryLabel() {
+      try {
+        const hist = JSON.parse(localStorage.getItem('sim2p_history') || '[]');
+        const el = document.getElementById('history-stat');
+        if (!hist.length) { el.textContent = 'Sin intentos previos'; return; }
+        const best = Math.max(...hist.map(h => h.score));
+        el.textContent = `Intentos: ${hist.length} · Mejor: ${best}/100`;
+      } catch {}
+    }
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function cloneShuffledMC(q) {
+      const corrSet = new Set(q.correctIndexes);
+      const regular = [];
+      const tail = [];
+      q.options.forEach((opt, idx) => {
+        const low = opt.toLowerCase();
+        const item = { opt, isCorr: corrSet.has(idx) };
+        if (low.includes('todas las anteriores') || low.includes('ninguna de las anteriores')) {
+          tail.push(item);
+        } else {
+          regular.push(item);
+        }
+      });
+      const combined = [...shuffle(regular), ...tail];
+      const newOptions = combined.map(x => x.opt);
+      const newCorr = [];
+      combined.forEach((x, idx) => { if (x.isCorr) newCorr.push(idx); });
+      return { ...q, options: newOptions, correctIndexes: newCorr };
+    }
+
+    function cloneShuffledMatrix(m) {
+      return { ...m, items: shuffle(m.items) };
+    }
+
+    // Timer controls
+    function startTimer() {
+      clearInterval(timerInterval);
+      secondsLeft = 1200;
+      timerPaused = false;
+      renderTimer();
+      timerInterval = setInterval(() => {
+        if (appMode !== 'exam' || timerPaused || examGraded) return;
+        secondsLeft--;
+        renderTimer();
+        if (secondsLeft <= 0) {
+          clearInterval(timerInterval);
+          gradeExam();
+        }
+      }, 1000);
+    }
+
+    function toggleTimerPause() {
+      if (appMode !== 'exam' || examGraded) return;
+      timerPaused = !timerPaused;
+      renderTimer();
+    }
+
+    function renderTimer() {
+      const pill = document.getElementById('timer-pill');
+      const disp = document.getElementById('timer-display');
+      const icon = document.getElementById('timer-icon');
+      const mins = String(Math.floor(Math.max(0, secondsLeft) / 60)).padStart(2, '0');
+      const secs = String(Math.max(0, secondsLeft) % 60).padStart(2, '0');
+      disp.textContent = timerPaused ? `${mins}:${secs} (Pausa)` : `${mins}:${secs}`;
+      icon.textContent = timerPaused ? '⏸️' : '⏱️';
+      pill.classList.toggle('urgent', secondsLeft <= 180 && !timerPaused && !examGraded);
+    }
+
+    // Mode Switching
+    function switchMode(mode) {
+      appMode = mode;
+      document.getElementById('tab-exam').classList.toggle('active', mode === 'exam');
+      document.getElementById('tab-practice').classList.toggle('active', mode === 'practice');
+      document.getElementById('tab-cheat').classList.toggle('active', mode === 'cheat');
+
+      const wrap = document.getElementById('main-wrap');
+      const sidebar = document.getElementById('exam-sidebar');
+      const filters = document.getElementById('practice-filters');
+      const cardsRoot = document.getElementById('cards-root');
+      const cheatRoot = document.getElementById('cheatsheet-root');
+      const mobBar = document.getElementById('mobile-bar');
+      const timerPill = document.getElementById('timer-pill');
+
+      if (mode === 'exam') {
+        wrap.classList.add('exam-layout');
+        sidebar.style.display = '';
+        filters.style.display = 'none';
+        cardsRoot.style.display = 'flex';
+        cheatRoot.style.display = 'none';
+        mobBar.style.display = 'flex';
+        timerPill.style.display = 'inline-flex';
+        renderExamView();
+      } else if (mode === 'practice') {
+        wrap.classList.remove('exam-layout');
+        sidebar.style.display = 'none';
+        filters.style.display = 'block';
+        cardsRoot.style.display = 'flex';
+        cheatRoot.style.display = 'none';
+        mobBar.style.display = 'none';
+        timerPill.style.display = 'none';
+        renderFilterChips();
+        renderPracticeView();
+      } else {
+        wrap.classList.remove('exam-layout');
+        sidebar.style.display = 'none';
+        filters.style.display = 'none';
+        cardsRoot.style.display = 'none';
+        cheatRoot.style.display = 'grid';
+        mobBar.style.display = 'none';
+        timerPill.style.display = 'none';
+        renderCheatSheet();
+      }
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    // Build Balanced 10-Exercise Official Exam
+    function startNewExam() {
+      examGraded = false;
+      mcAnswers = {};
+      diagAnswers = {};
+      matrixAnswers = {};
+
+      const letter = String.fromCharCode(65 + Math.floor(Math.random() * 12));
+      document.getElementById('tema-badge').textContent = `Tema ${letter}`;
+      document.getElementById('sheet-title').textContent = `Parcial Nº 2 — Tema ${letter}`;
+      const banner = document.getElementById('final-banner');
+      banner.className = 'final-score-banner';
+      banner.innerHTML = '';
+
+      // Pick balanced MC across units (at least 1 from each unit + 1 extra)
+      const units = ['U3', 'U4', 'U5A', 'U5D', 'U6P', 'U6T'];
+      const chosenMC = [];
+      const usedIds = new Set();
+      units.forEach(u => {
+        const pool = shuffle(DB.questions.filter(q => q.unit === u));
+        if (pool.length) {
+          chosenMC.push(pool[0]);
+          usedIds.add(pool[0].id);
+        }
+      });
+      const restPool = shuffle(DB.questions.filter(q => !usedIds.has(q.id)));
+      while (chosenMC.length < 7 && restPool.length) {
+        chosenMC.push(restPool.shift());
+      }
+
+      const chosenDiags = shuffle(DB.diagrams).slice(0, 2);
+      const chosenMat = shuffle(DB.matrices)[0];
+
+      // Interleave like the real UCASAL sheet (Ej 5 and Ej 9 diagrams, Ej 10 matrix)
+      const mcs = shuffle(chosenMC).map(cloneShuffledMC);
+      examItems = [
+        { kind: 'mc', data: mcs[0], key: 'ex-1' },
+        { kind: 'mc', data: mcs[1], key: 'ex-2' },
+        { kind: 'mc', data: mcs[2], key: 'ex-3' },
+        { kind: 'mc', data: mcs[3], key: 'ex-4' },
+        { kind: 'diag', data: chosenDiags[0], key: 'ex-5' },
+        { kind: 'mc', data: mcs[4], key: 'ex-6' },
+        { kind: 'mc', data: mcs[5], key: 'ex-7' },
+        { kind: 'mc', data: mcs[6], key: 'ex-8' },
+        { kind: 'diag', data: chosenDiags[1], key: 'ex-9' },
+        { kind: 'mat', data: cloneShuffledMatrix(chosenMat), key: 'ex-10' }
+      ];
+
+      startTimer();
+      renderExamView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function isItemAnswered(item) {
+      if (item.kind === 'mc') return mcAnswers[item.key] && mcAnswers[item.key].size > 0;
+      if (item.kind === 'diag') {
+        const ans = diagAnswers[item.key] || {};
+        return Object.keys(ans).length === item.data.slots.length;
+      }
+      if (item.kind === 'mat') return matrixAnswers[item.key] && matrixAnswers[item.key].size > 0;
+      return false;
+    }
+
+    function updateExamProgressUI() {
+      const grid = document.getElementById('score-grid');
+      if (!grid) return;
+      let answeredCount = 0;
+      grid.innerHTML = examItems.map((it, idx) => {
+        const ans = isItemAnswered(it);
+        if (ans) answeredCount++;
+        let cls = 'score-cell';
+        let valTxt = ans ? '•' : '-';
+        if (examGraded) {
+          const ok = evaluateSingleItem(it);
+          cls += ok ? ' cell-ok' : ' cell-err';
+          valTxt = ok ? '10' : '0';
+        } else if (ans) {
+          cls += ' answered';
+        }
+        return `<div class="${cls}" onclick="document.getElementById('card-${it.key}').scrollIntoView({behavior:'smooth'})">
+          <span class="score-cell-lbl">Ej.${idx + 1}</span>
+          <span class="score-cell-val">${valTxt}</span>
+        </div>`;
+      }).join('');
+      const mobProg = document.getElementById('mob-progress');
+      if (mobProg) mobProg.textContent = `${answeredCount} / 10`;
+    }
+
+    function renderExamView() {
+      const root = document.getElementById('cards-root');
+      root.innerHTML = examItems.map((it, idx) => renderCardHTML(it, idx + 1, false)).join('');
+      attachSVGListeners();
+      updateExamProgressUI();
+    }
+
+    // Practice View & Filters
+    let practiceItemsCache = null;
+    function getAllPracticeItems() {
+      if (practiceItemsCache) return practiceItemsCache;
+      const all = [];
+      DB.questions.forEach(q => all.push({ kind: 'mc', data: cloneShuffledMC(q), key: `pr-${q.id}` }));
+      DB.diagrams.forEach(d => all.push({ kind: 'diag', data: d, key: `pr-${d.id}` }));
+      DB.matrices.forEach(m => all.push({ kind: 'mat', data: cloneShuffledMatrix(m), key: `pr-${m.id}` }));
+      practiceItemsCache = all;
+      return all;
+    }
+
+    function renderFilterChips() {
+      const mistakes = getMistakes();
+      const totalCount = getAllPracticeItems().length;
+      const filters = [
+        { id: 'ALL', label: `Todas (${totalCount})` },
+        { id: 'MISTAKES', label: `⚠️ Mis Falladas (${mistakes.size})` },
+        { id: 'DIAGS', label: `🖼️ Esquemas (${DB.diagrams.length})` },
+        { id: 'MATS', label: `☑️ Matrices (${DB.matrices.length})` },
+        { id: 'AGIL', label: `⚡ Enfoque Ágil / Híbrido` },
+        { id: 'U3', label: `U.III · Métricas` },
+        { id: 'U4', label: `U.IV · Planificación` },
+        { id: 'U5A', label: `U.V · Análisis` },
+        { id: 'U5D', label: `U.V · Diseño` },
+        { id: 'U6P', label: `U.VI · Codificación` },
+        { id: 'U6T', label: `U.VI · Pruebas (Humo)` }
+      ];
+      const bar = document.getElementById('filter-chips');
+      bar.innerHTML = filters.map(f =>
+        `<button class="chip ${practiceFilter === f.id ? 'active' : ''}" onclick="setPracticeFilter('${f.id}')">${f.label}</button>`
+      ).join('');
+    }
+
+    function setPracticeFilter(fid) {
+      practiceFilter = fid;
+      renderFilterChips();
+      renderPracticeView();
+    }
+
+    function renderPracticeView() {
+      const mistakes = getMistakes();
+      let items = getAllPracticeItems();
+      if (practiceFilter === 'MISTAKES') items = items.filter(i => mistakes.has(i.data.id));
+      else if (practiceFilter === 'DIAGS') items = items.filter(i => i.kind === 'diag');
+      else if (practiceFilter === 'MATS') items = items.filter(i => i.kind === 'mat');
+      else if (practiceFilter === 'AGIL') items = items.filter(i => i.data.perspective === 'agil' || i.data.perspective === 'ambas' || i.data.id === 'mat-u3-agil');
+      else if (practiceFilter !== 'ALL') items = items.filter(i => i.data.unit === practiceFilter);
+
+      const root = document.getElementById('cards-root');
+      if (!items.length) {
+        root.innerHTML = `<div class="q-card" style="text-align:center; padding:32px;">
+          <p style="margin:0; font-weight:700; color:var(--accent);">¡No hay ejercicios pendientes en este filtro!</p>
+          <p style="margin:8px 0 0; font-size:0.86rem; color:var(--text-muted);">Prueba seleccionando otra unidad o haz un simulacro de examen.</p>
+        </div>`;
+        return;
+      }
+      root.innerHTML = items.map((it, idx) => renderCardHTML(it, idx + 1, true)).join('');
+      attachSVGListeners();
+    }
+
+    // Unified Card Renderer
+    function renderCardHTML(item, displayNum, isPractice) {
+      const d = item.data;
+      const isGraded = isPractice ? !!practiceGraded[item.key] : examGraded;
+      const isOk = isGraded ? evaluateSingleItem(item) : null;
+      const cardCls = isGraded ? (isOk ? 'q-card graded-card-ok' : 'q-card graded-card-err') : 'q-card';
+
+      const persp = d.perspective || 'prescriptiva';
+      const perspLbl = persp === 'agil' ? 'Ágil' : (persp === 'ambas' ? 'Prescriptivo vs Ágil' : 'Prescriptiva');
+
+      let bodyHTML = '';
+      if (item.kind === 'mc') bodyHTML = renderMCBody(item, isGraded);
+      else if (item.kind === 'diag') bodyHTML = renderDiagBody(item, isGraded);
+      else if (item.kind === 'mat') bodyHTML = renderMatBody(item, isGraded);
+
+      const typeIcon = item.kind === 'diag' ? '🖼️ Esquema' : (item.kind === 'mat' ? '☑️ Matriz' : '📝 Múltiple Choice');
+      const statusBadge = isGraded
+        ? (isOk ? `<span style="color:var(--ok);font-weight:800;font-size:0.82rem;">✓ +10 pts</span>`
+                : `<span style="color:var(--err);font-weight:800;font-size:0.82rem;">✗ 0 pts</span>`)
+        : '';
+
+      const practiceBtn = isPractice
+        ? `<div class="practice-actions">
+             <button class="btn ${isGraded ? 'btn-secondary' : 'btn-primary'}" style="flex:0;" onclick="gradePracticeItem('${item.key}')">
+               ${isGraded ? '🔄 Reintentar' : '🔍 Verificar respuesta'}
+             </button>
+           </div>`
+        : '';
+
+      return `
+      <article class="${cardCls}" id="card-${item.key}" data-key="${item.key}">
+        <div class="q-meta">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span class="q-num-badge">Ej. ${displayNum} · ${typeIcon}</span>
+            <span class="q-unit-tag">${d.unitLabel}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="q-persp-tag persp-${persp}">${perspLbl}</span>
+            ${statusBadge}
+          </div>
+        </div>
+        <h2 class="q-title">${d.text || d.title || d.prompt}</h2>
+        ${bodyHTML}
+        ${practiceBtn}
+        <div class="trap-box ${isGraded ? 'visible' : ''}">
+          <strong>🛡️ Radar Cazabobos:</strong> ${d.trapNote}
+        </div>
+      </article>`;
+    }
+
+    function renderMCBody(item, isGraded) {
+      const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+      const userSet = mcAnswers[item.key] || new Set();
+      const correctSet = new Set(item.data.correctIndexes);
+
+      return `<div class="choices-stack">` + item.data.options.map((opt, idx) => {
+        const sel = userSet.has(idx);
+        const isCorr = correctSet.has(idx);
+        let cls = 'choice-row';
+        let mark = sel ? '✓' : '';
+        if (isGraded) {
+          if (isCorr && sel) { cls += ' opt-correct'; mark = '✓'; }
+          else if (isCorr && !sel) { cls += ' opt-missed'; mark = '!'; }
+          else if (!isCorr && sel) { cls += ' opt-wrong'; mark = '✗'; }
+        } else if (sel) {
+          cls += ' selected';
+        }
+        return `<div class="${cls}" onclick="toggleMC('${item.key}', ${idx})">
+          <div class="choice-box">${mark}</div>
+          <div class="choice-txt"><span class="choice-letter">${letters[idx]}.</span> ${opt}</div>
+        </div>`;
+      }).join('') + `</div>`;
+    }
+
+    function renderDiagBody(item, isGraded) {
+      const ans = diagAnswers[item.key] || {};
+      const slotsHTML = item.data.slots.map((sl, sIdx) => {
+        const val = ans[sIdx] || '';
+        let cls = 'slot-row';
+        let rightTxt = val ? val : 'Tocar para elegir ▾';
+        if (isGraded) {
+          if (val === sl.correct) {
+            cls += ' slot-ok';
+            rightTxt = `✓ ${val}`;
+          } else {
+            cls += ' slot-err';
+            rightTxt = `✗ ${val || '(Vacío)'} → ${sl.correct}`;
+          }
+        } else if (val) {
+          cls += ' filled';
+        }
+        return `<div class="${cls}" onclick="openSlotPicker('${item.key}', ${sIdx})">
+          <span class="slot-row-lbl">${sl.label}</span>
+          <span class="slot-row-val">${rightTxt}</span>
+        </div>`;
+      }).join('');
+
+      return `
+        <div class="diag-wrapper" data-diag-key="${item.key}">
+          <p class="diag-hint">👆 Toca cualquier recuadro [1], [2]... en el gráfico o en la lista inferior para completarlo:</p>
+          ${item.data.svg}
+        </div>
+        <div class="slots-list">${slotsHTML}</div>
+      `;
+    }
+
+    function renderMatBody(item, isGraded) {
+      const userSet = matrixAnswers[item.key] || new Set();
+      return `<div class="matrix-grid">` + item.data.items.map((it, idx) => {
+        const sel = userSet.has(idx);
+        let cls = 'matrix-item';
+        let mark = sel ? 'X' : '';
+        if (isGraded) {
+          if (it.correct && sel) { cls += ' opt-correct'; mark = '✓'; }
+          else if (it.correct && !sel) { cls += ' opt-missed'; mark = '!'; }
+          else if (!it.correct && sel) { cls += ' opt-wrong'; mark = '✗'; }
+        } else if (sel) {
+          cls += ' selected';
+        }
+        return `<div class="${cls}" onclick="toggleMat('${item.key}', ${idx})">
+          <div class="choice-box">${mark}</div>
+          <div class="choice-txt">${it.text}</div>
+        </div>`;
+      }).join('') + `</div>`;
+    }
+
+    // Attach SVG Slot Clicks & Sync Labels Inside SVG
+    function attachSVGListeners() {
+      document.querySelectorAll('.diag-wrapper').forEach(wrap => {
+        const key = wrap.getAttribute('data-diag-key');
+        const item = findRenderedItem(key);
+        if (!item) return;
+        const isGraded = appMode === 'practice' ? !!practiceGraded[key] : examGraded;
+        const ans = diagAnswers[key] || {};
+
+        wrap.querySelectorAll('.svg-slot').forEach(g => {
+          const sIdx = parseInt(g.getAttribute('data-slot'), 10);
+          g.onclick = () => openSlotPicker(key, sIdx);
+          const val = ans[sIdx];
+          const corr = item.data.slots[sIdx].correct;
+          const txtEl = g.querySelector('.slot-txt');
+
+          const rectEl = g.querySelector('.slot-box');
+          const boxW = rectEl ? parseFloat(rectEl.getAttribute('width') || '150') : 150;
+          const maxChars = Math.max(12, Math.floor(boxW / 7.2));
+
+          g.classList.remove('filled', 'slot-ok', 'slot-err');
+          if (isGraded) {
+            const ok = val === corr;
+            g.classList.add(ok ? 'slot-ok' : 'slot-err');
+            const labelShow = ok ? `✓ ${corr}` : `✗ ${corr}`;
+            txtEl.textContent = labelShow.length > maxChars ? labelShow.slice(0, maxChars - 1) + '…' : labelShow;
+          } else if (val) {
+            g.classList.add('filled');
+            const shortVal = `[${sIdx + 1}] ${val}`;
+            txtEl.textContent = shortVal.length > maxChars ? shortVal.slice(0, maxChars - 1) + '…' : shortVal;
+          }
+        });
+      });
+    }
+
+    function findRenderedItem(key) {
+      if (key.startsWith('ex-')) return examItems.find(i => i.key === key);
+      return getAllPracticeItems().find(i => i.key === key);
+    }
+
+    function rerenderSingleCard(key) {
+      const cardEl = document.getElementById(`card-${key}`);
+      if (!cardEl) return;
+      const item = findRenderedItem(key);
+      if (!item) return;
+      const numMatch = cardEl.querySelector('.q-num-badge').textContent.match(/Ej\.\s*(\d+)/);
+      const displayNum = numMatch ? parseInt(numMatch[1], 10) : 1;
+      cardEl.outerHTML = renderCardHTML(item, displayNum, appMode === 'practice');
+      attachSVGListeners();
+      if (appMode === 'exam') updateExamProgressUI();
+    }
+
+    // Interaction Handlers
+    function toggleMC(key, optIdx) {
+      const isGraded = appMode === 'practice' ? !!practiceGraded[key] : examGraded;
+      if (isGraded) return;
+      const item = findRenderedItem(key);
+      if (!mcAnswers[key]) mcAnswers[key] = new Set();
+      const set = mcAnswers[key];
+
+      const optText = item.data.options[optIdx].toLowerCase();
+      const isExclusiveMeta = optText.includes('ninguna de las anteriores') || optText.includes('todas las anteriores');
+
+      if (set.has(optIdx)) {
+        set.delete(optIdx);
+      } else {
+        if (isExclusiveMeta) {
+          set.clear();
+          set.add(optIdx);
+        } else {
+          // Uncheck Todas/Ninguna if user selects a concrete option
+          item.data.options.forEach((o, i) => {
+            const ol = o.toLowerCase();
+            if (ol.includes('ninguna de las anteriores') || ol.includes('todas las anteriores')) set.delete(i);
+          });
+          set.add(optIdx);
+        }
+      }
+      rerenderSingleCard(key);
+    }
+
+    function toggleMat(key, idx) {
+      const isGraded = appMode === 'practice' ? !!practiceGraded[key] : examGraded;
+      if (isGraded) return;
+      if (!matrixAnswers[key]) matrixAnswers[key] = new Set();
+      const set = matrixAnswers[key];
+      if (set.has(idx)) set.delete(idx); else set.add(idx);
+      rerenderSingleCard(key);
+    }
+
+    function openSlotPicker(key, slotIdx) {
+      const isGraded = appMode === 'practice' ? !!practiceGraded[key] : examGraded;
+      if (isGraded) return;
+      const item = findRenderedItem(key);
+      activePicker = { key, item, slotIdx };
+
+      const slotObj = item.data.slots[slotIdx];
+      const currentVal = (diagAnswers[key] || {})[slotIdx] || '';
+
+      document.getElementById('picker-slot-title').textContent = slotObj.label;
+      document.getElementById('picker-options').innerHTML = item.data.options.map((opt, oIdx) => {
+        const act = currentVal === opt ? 'active-opt' : '';
+        return `<button class="picker-opt ${act}" onclick="selectSlotOption(${oIdx})">${opt}</button>`;
+      }).join('');
+
+      document.getElementById('picker-backdrop').classList.add('open');
+    }
+
+    function selectSlotOption(optIdx) {
+      if (!activePicker) return;
+      const { key, item, slotIdx } = activePicker;
+      if (!diagAnswers[key]) diagAnswers[key] = {};
+      diagAnswers[key][slotIdx] = item.data.options[optIdx];
+      const keyToRender = key;
+      closePicker();
+      rerenderSingleCard(keyToRender);
+    }
+
+    function clearActiveSlot() {
+      if (!activePicker) return;
+      const { key, slotIdx } = activePicker;
+      if (diagAnswers[key]) delete diagAnswers[key][slotIdx];
+      const keyToRender = key;
+      closePicker();
+      rerenderSingleCard(keyToRender);
+    }
+
+    function closePicker() {
+      document.getElementById('picker-backdrop').classList.remove('open');
+      activePicker = null;
+    }
+
+    // Strict Binary Evaluation (UCASAL Rule: 100% match or 0 pts)
+    function evaluateSingleItem(item) {
+      if (item.kind === 'mc') {
+        const userSet = mcAnswers[item.key] || new Set();
+        const corrSet = new Set(item.data.correctIndexes);
+        return userSet.size === corrSet.size && [...corrSet].every(v => userSet.has(v));
+      }
+      if (item.kind === 'diag') {
+        const ans = diagAnswers[item.key] || {};
+        return item.data.slots.every((sl, idx) => ans[idx] === sl.correct);
+      }
+      if (item.kind === 'mat') {
+        const userSet = matrixAnswers[item.key] || new Set();
+        const corrIndexes = item.data.items.map((it, idx) => it.correct ? idx : -1).filter(i => i !== -1);
+        const corrSet = new Set(corrIndexes);
+        return userSet.size === corrSet.size && [...corrSet].every(v => userSet.has(v));
+      }
+      return false;
+    }
+
+    function gradePracticeItem(key) {
+      if (practiceGraded[key]) {
+        delete practiceGraded[key];
+        delete mcAnswers[key];
+        delete diagAnswers[key];
+        delete matrixAnswers[key];
+        rerenderSingleCard(key);
+        return;
+      }
+      practiceGraded[key] = true;
+      const item = findRenderedItem(key);
+      const ok = evaluateSingleItem(item);
+      const mistakes = getMistakes();
+      if (!ok) mistakes.add(item.data.id);
+      else mistakes.delete(item.data.id);
+      saveMistakes(mistakes);
+      renderFilterChips();
+      rerenderSingleCard(key);
+    }
+
+    function gradeExam() {
+      if (examGraded) return;
+      examGraded = true;
+      clearInterval(timerInterval);
+
+      let totalScore = 0;
+      const mistakes = getMistakes();
+      examItems.forEach(it => {
+        const ok = evaluateSingleItem(it);
+        if (ok) {
+          totalScore += 10;
+          mistakes.delete(it.data.id);
+        } else {
+          mistakes.add(it.data.id);
+        }
+      });
+      saveMistakes(mistakes);
+      recordAttempt(totalScore);
+
+      const banner = document.getElementById('final-banner');
+      if (totalScore >= 60) {
+        banner.className = 'final-score-banner pass';
+        banner.innerHTML = `🎉 ¡APROBADO! Nota Final: ${totalScore} / 100 pts (${totalScore/10}/10 ejercicios impecables)`;
+      } else {
+        banner.className = 'final-score-banner fail';
+        banner.innerHTML = `⚠️ DESAPROBADO: ${totalScore} / 100 pts (Se requiere 60 pts). Revisa abajo el Radar Cazabobos de cada error.`;
+      }
+
+      renderExamView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Cheat-Sheet Tab Content
+    function renderCheatSheet() {
+      const root = document.getElementById('cheatsheet-root');
+      root.innerHTML = `
+        <div class="cheat-card">
+          <h3>⚡ 1. Prescriptivo (Cascada) vs. Ágil (Scrum)</h3>
+          <table class="cheat-table">
+            <tr><th>Dimensión</th><th>Prescriptivo (Cascada)</th><th>Ágil (Scrum)</th></tr>
+            <tr><td><strong>Alcance</strong></td><td><strong>FIJO</strong> (Definido al inicio)</td><td><strong>VARIABLE</strong> (Priorizado en Backlog)</td></tr>
+            <tr><td><strong>Tiempo y Costo</strong></td><td>Estimados / Variables</td><td><strong>FIJOS</strong> (Timebox 2-4 sem / Equipo fijo)</td></tr>
+            <tr><td><strong>Métrica Tamaño</strong></td><td><strong>Puntos de Función</strong> (Tamaño absoluto funcional, indep. del equipo)</td><td><strong>Puntos de Historia</strong> (Esfuerzo + Complejidad + Riesgo; propio del equipo)</td></tr>
+            <tr><td><strong>Pruebas</strong></td><td>Concentradas hacia el final</td><td>Validación continua por Sprint (Humo / Regresión)</td></tr>
+          </table>
+          <p style="font-size:0.8rem;color:#fde047;margin:10px 0 0;">⚠️ Si se fuerzan Alcance + Tiempo + Costo a la vez, colapsa la variable oculta central: <strong>LA CALIDAD</strong> (deuda técnica).</p>
+        </div>
+
+        <div class="cheat-card">
+          <h3>🏠 2. Modelo 4+1 Vistas de Kruchten (IEEE 1471 / ISO 42010)</h3>
+          <table class="cheat-table">
+            <tr><th>Vista</th><th>Plano de la Casa</th><th>Stakeholder y UML</th></tr>
+            <tr><td><strong>Lógica</strong></td><td>Plano de Planta / Distribución</td><td>Cliente · Clases / Casos de Uso</td></tr>
+            <tr><td><strong>Proceso</strong></td><td>Plano Eléctrico (flujo/carga)</td><td>Integradores · Secuencia / Actividad / Estado</td></tr>
+            <tr><td><strong>Física</strong></td><td>Tuberías / Fontanería / Gas</td><td>DevOps / SysAdmin · Despliegue</td></tr>
+            <tr><td><strong>Desarrollo</strong></td><td>Estructura, Vigas y Cimientos</td><td>Programadores · Componentes / Paquetes</td></tr>
+            <tr><td><strong>+1 Escenarios</strong></td><td>Recorrido del habitante</td><td><strong>Une y valida</strong> las 4 vistas en el centro</td></tr>
+          </table>
+        </div>
+
+        <div class="cheat-card">
+          <h3>📐 3. Fórmulas, Reglas y Números Exactos de Cátedra</h3>
+          <ul class="cheat-list">
+            <li><strong>Éxito de estimación:</strong> Estimación inicial dentro del <strong>30%</strong> del costo final real + permite refinamiento.</li>
+            <li><strong>Puntos de Función (Albrecht, 1979):</strong> 5 parámetros (Entrada, Salida, Consulta, Fichero Lógico Interno, Fichero Lógico Externo). <strong>14 características</strong> ponderadas de <strong>0 a 5</strong>.</li>
+            <li><strong>Factor de Ajuste PF:</strong> <code>FA = (TDI × 0.01) + 0.65</code> · <code>PFA = PF × FA</code> · (~11,5 hs/hombre por PFA).</li>
+            <li><strong>COCOMO (Boehm, 1981):</strong> Modos <em>Orgánico, Semirígido, Rígido</em> × Modelos <em>Básico, Intermedio (15 conductores), Detallado</em>. 1 Mes-Hombre = <strong>152 hs</strong>.</li>
+            <li><strong>Regla 40-20-40 (Esfuerzo):</strong> Análisis/Diseño <strong>40-50%</strong> · Codificación <strong>15-20%</strong> · Prueba/Depuración <strong>30-40%</strong>. (Planificación <strong>&lt; 3%</strong>; mayor costo histórico total = <strong>Mantenimiento</strong>).</li>
+            <li><strong>PERT Tiempo esperado:</strong> <code>te = (to + 4·tm + tp) / 6</code>.</li>
+          </ul>
+        </div>
+
+        <div class="cheat-card">
+          <h3>🎯 4. Las 10 Trampas Favoritas del Profesor</h3>
+          <ul class="cheat-list">
+            <li><strong>Prueba exitosa:</strong> Es la que <strong>DESCUBRE un error no detectado aún</strong> (NUNCA la que da cero errores).</li>
+            <li><strong>Ausencia de defectos:</strong> La prueba <strong>NO asegura ausencia de defectos</strong>; sólo demuestra su presencia.</li>
+            <li><strong>Verificación vs Validación:</strong> Verificación = <em>¿producto correctamente?</em> · Validación = <em>¿producto correcto?</em></li>
+            <li><strong>Caja Negra vs Blanca:</strong> Negra = interfaz, requisitos funcionales, <em>"gran escala"</em> · Blanca = estructura de control, <em>"pequeña escala"</em>.</li>
+            <li><strong>Sistema Objeto (Análisis):</strong> Es la <em>percepción de la realidad que tiene el analista</em> (SI es sólo una parte).</li>
+            <li><strong>Revisión de Registros:</strong> Pedir copias de formularios <strong>USADOS</strong>, NO formularios en blanco.</li>
+            <li><strong>Formatos Entrevista:</strong> <em>Piramidal</em> (objetivo → amplio), <em>Embudo</em> (amplio → objetivo), <em>Rombo</em> (objetivo → amplio → objetivo).</li>
+            <li><strong>Jerarquía de Control:</strong> NO muestra secuencia procedimental. <em>Grado de salida</em> = cuántos controla; <em>Grado de entrada</em> = cuántos lo controlan.</li>
+            <li><strong>Diseño Modular:</strong> Siempre <strong>ALTA Cohesión</strong> (peor: Coincidente, mejor: Funcional) y <strong>BAJO Acoplamiento</strong> (peor: de Contenido).</li>
+            <li><strong>Prueba de Humo:</strong> Verificación rápida inicial de funciones vitales para detectar fallos catastróficos antes de pruebas profundas.</li>
+          </ul>
+        </div>
+      `;
+    }
+
+    // Boot
+    window.addEventListener('DOMContentLoaded', () => {
+      updateHistoryLabel();
+      startNewExam();
+    });
+  </script>
+</body>
+</html>
