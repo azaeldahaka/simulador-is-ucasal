@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
-  <meta name="theme-color" content="#0f172a" />
+    <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Simulador IS" />
   <title>Simulador 2do Parcial Teórico — Ingeniería de Software</title>
   <style>
     :root {
@@ -109,6 +116,43 @@
       gap: 6px;
       min-width: 0;
     }
+
+    
+    .offline-badge {
+      font-size: 0.68rem;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(34, 197, 94, 0.14);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      white-space: nowrap;
+      transition: background 160ms, color 160ms, border-color 160ms;
+    }
+    .offline-badge.is-offline {
+      background: rgba(250, 204, 21, 0.15);
+      color: #fde047;
+      border-color: rgba(250, 204, 21, 0.4);
+    }
+    .btn-install {
+      background: rgba(56, 189, 248, 0.18);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: transform 100ms var(--ease-out), background 140ms;
+    }
+    .btn-install:active { transform: scale(0.96); }
 
     .brand-badge {
       background: rgba(56, 189, 248, 0.16);
@@ -954,6 +998,8 @@
           <h1 class="brand-title">
             <span>Simulador 2do Parcial Teórico</span>
             <span class="brand-badge" id="tema-badge">Tema A</span>
+            <span class="offline-badge" id="offline-status-badge" title="Funciona 100% sin internet">⚡ Offline listo</span>
+            <button class="btn-install" id="btn-install-pwa" style="display:none;" onclick="installPWA()">📲 Instalar App</button>
           </h1>
           <p class="brand-sub">Ingeniería de Software · UCASAL · U.III a U.VI (hasta HUMO)</p>
         </div>
@@ -1747,7 +1793,56 @@
     }
 
     // Boot
+    
+    // PWA & Service Worker Registration (100% Offline Support)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => {
+            console.log('✅ ServiceWorker registrado con éxito (Modo Offline activo):', reg.scope);
+          })
+          .catch(err => {
+            console.warn('ServiceWorker no disponible:', err);
+          });
+      });
+    }
+
+    function updateOnlineStatus() {
+      const badge = document.getElementById('offline-status-badge');
+      if (!badge) return;
+      if (navigator.onLine) {
+        badge.className = 'offline-badge';
+        badge.innerHTML = '⚡ Offline listo';
+        badge.title = 'Todo el contenido está guardado en tu dispositivo para usar sin internet';
+      } else {
+        badge.className = 'offline-badge is-offline';
+        badge.innerHTML = '📴 Modo sin conexión';
+        badge.title = 'Estás usando el simulador 100% offline sin consumir datos';
+      }
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('btn-install-pwa');
+      if (btn) btn.style.display = 'inline-flex';
+    });
+
+    function installPWA() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(() => {
+        deferredPrompt = null;
+        const btn = document.getElementById('btn-install-pwa');
+        if (btn) btn.style.display = 'none';
+      });
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
+      updateOnlineStatus();
       updateHistoryLabel();
       startNewExam();
     });

@@ -1,0 +1,32 @@
+{
+  "name": "Simulador 2do Parcial - Ing. de Software UCASAL",
+  "short_name": "Simulador IS",
+  "description": "Simulador interactivo del 2do Parcial Teórico de Ingeniería de Software UCASAL. Funciona 100% offline sin conexión.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b1120",
+  "theme_color": "#0f172a",
+  "categories": ["education", "study", "utilities"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
